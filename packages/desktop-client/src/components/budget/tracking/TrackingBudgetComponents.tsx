@@ -1,7 +1,7 @@
 // @ts-strict-ignore
 import React, { memo, useRef, useState } from 'react';
 import type { ComponentProps, CSSProperties } from 'react';
-import { Trans } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { Button } from '@actual-app/components/button';
 import { SvgCheveronDown } from '@actual-app/components/icons/v1';
@@ -17,6 +17,10 @@ import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
 
 import * as monthUtils from 'loot-core/shared/months';
+import {
+  calculateAllocationForPeriod,
+  type BudgetAllocationPeriod,
+} from 'loot-core/shared/weeklyAllocation';
 
 import type { CategoryGroupMonthProps, CategoryMonthProps } from '..';
 
@@ -32,12 +36,15 @@ import {
 import { Field, SheetCell } from '@desktop-client/components/table';
 import type { SheetCellProps } from '@desktop-client/components/table';
 import { useCategoryScheduleGoalTemplateIndicator } from '@desktop-client/hooks/useCategoryScheduleGoalTemplateIndicator';
+import { useCategories } from '@desktop-client/hooks/useCategories';
 import { useFormat } from '@desktop-client/hooks/useFormat';
+import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { useNavigate } from '@desktop-client/hooks/useNavigate';
 import { useSheetValue } from '@desktop-client/hooks/useSheetValue';
 import { useUndo } from '@desktop-client/hooks/useUndo';
 import type { Binding, SheetFields } from '@desktop-client/spreadsheet';
 import { trackingBudget } from '@desktop-client/spreadsheet/bindings';
+import { useConvertedCategoryTotal } from '@desktop-client/components/budget/useConvertedCategoryTotal';
 
 export const useTrackingSheetValue = <
   FieldName extends SheetFields<'tracking-budget'>,
@@ -63,14 +70,51 @@ const headerLabelStyle: CSSProperties = {
   flex: 1,
   padding: '0 5px',
   textAlign: 'right',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'stretch',
 };
 
 const cellStyle: CSSProperties = {
   color: theme.tableHeaderText,
   fontWeight: 600,
+  textAlign: 'right',
+  width: '100%',
 };
 
+function getAllocationPeriodLabel(
+  allocationPeriod: BudgetAllocationPeriod,
+  t: (key: string) => string,
+) {
+  if (allocationPeriod === 'fortnightly') {
+    return t('Fortnight');
+  }
+
+  if (allocationPeriod === 'monthly') {
+    return t('Month');
+  }
+
+  return t('Week');
+}
+
 export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
+  const { t } = useTranslation();
+  const { data: { grouped: categoryGroups } = { grouped: [] } } = useCategories();
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const expenseCategories = categoryGroups.flatMap(group =>
+    group.is_income ? [] : (group.categories ?? []),
+  );
+  const totalBudgetAllocation = useConvertedCategoryTotal({
+    categories: expenseCategories,
+    allocationPeriod,
+    bindingFactory: trackingBudget.catBudgeted,
+    sheetBinding: trackingBudget.catBudgeted('total-budget-allocation'),
+  });
+  const totalSpent = useTrackingSheetValue(trackingBudget.totalSpent) ?? 0;
+  const totalBalanceAllocation = totalBudgetAllocation - Math.abs(totalSpent);
+
   return (
     <View
       style={{
@@ -82,7 +126,7 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
       }}
     >
       <View style={headerLabelStyle}>
-        <Text style={{ color: theme.tableHeaderText }}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
           <Trans>Budgeted</Trans>
         </Text>
         <TrackingCellValue
@@ -93,7 +137,27 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
         </TrackingCellValue>
       </View>
       <View style={headerLabelStyle}>
-        <Text style={{ color: theme.tableHeaderText }}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
+          {t('Budget ({{period}})', {
+            period: getAllocationPeriodLabel(allocationPeriod, t),
+          })}
+        </Text>
+        <TrackingCellValue
+          binding={trackingBudget.totalBudgetedExpense}
+          type="financial"
+        >
+          {props => (
+            <CellValueText
+              {...props}
+              name="budget-allocation-total"
+              value={totalBudgetAllocation}
+              style={cellStyle}
+            />
+          )}
+        </TrackingCellValue>
+      </View>
+      <View style={headerLabelStyle}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
           <Trans>Spent</Trans>
         </Text>
         <TrackingCellValue binding={trackingBudget.totalSpent} type="financial">
@@ -101,14 +165,21 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
         </TrackingCellValue>
       </View>
       <View style={headerLabelStyle}>
-        <Text style={{ color: theme.tableHeaderText }}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
           <Trans>Balance</Trans>
         </Text>
         <TrackingCellValue
           binding={trackingBudget.totalLeftover}
           type="financial"
         >
-          {props => <CellValueText {...props} style={cellStyle} />}
+          {props => (
+            <CellValueText
+              {...props}
+              name="balance-allocation-total"
+              value={totalBalanceAllocation}
+              style={cellStyle}
+            />
+          )}
         </TrackingCellValue>
       </View>
     </View>
@@ -142,7 +213,19 @@ export const GroupMonth = memo(function GroupMonth({
   month,
   group,
 }: CategoryGroupMonthProps) {
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
   const { id } = group;
+  const categories = group.categories ?? [];
+  const groupBudgetAllocation = useConvertedCategoryTotal({
+    categories,
+    allocationPeriod,
+    bindingFactory: trackingBudget.catBudgeted,
+    sheetBinding: trackingBudget.catBudgeted(id),
+  });
+  const groupSpent = useTrackingSheetValue(trackingBudget.groupSumAmount(id)) ?? 0;
+  const groupBalanceAllocation = groupBudgetAllocation - Math.abs(groupSpent);
 
   return (
     <View
@@ -164,31 +247,38 @@ export const GroupMonth = memo(function GroupMonth({
           type: 'financial',
         }}
       />
-      <TrackingSheetCell
-        name="spent"
-        width="flex"
-        textAlign="right"
-        style={{ fontWeight: 600, ...styles.tnum }}
-        valueProps={{
-          binding: trackingBudget.groupSumAmount(id),
-          type: 'financial',
-        }}
-      />
+      <Field name="budget-allocation" width="flex" style={{ textAlign: 'right' }}>
+        <CellValueText
+          type="financial"
+          name={`group-budget-allocation-${id}`}
+          value={groupBudgetAllocation}
+          style={{ fontWeight: 600, ...styles.tnum }}
+        />
+      </Field>
+      <Field name="spent" width="flex" style={{ textAlign: 'right' }}>
+        <TrackingCellValue
+          binding={trackingBudget.groupSumAmount(id)}
+          type="financial"
+        >
+          {props => <CellValueText {...props} style={{ fontWeight: 600, ...styles.tnum }} />}
+        </TrackingCellValue>
+      </Field>
       {!group.is_income && (
-        <TrackingSheetCell
+        <Field
           name="balance"
           width="flex"
-          textAlign="right"
           style={{
-            fontWeight: 600,
+            textAlign: 'right',
             paddingRight: styles.monthRightPadding,
-            ...styles.tnum,
           }}
-          valueProps={{
-            binding: trackingBudget.groupBalance(id),
-            type: 'financial',
-          }}
-        />
+        >
+          <CellValueText
+            type="financial"
+            name={`group-balance-allocation-${id}`}
+            value={groupBalanceAllocation}
+            style={{ fontWeight: 600, ...styles.tnum }}
+          />
+        </Field>
       )}
     </View>
   );
@@ -202,6 +292,20 @@ export const CategoryMonth = memo(function CategoryMonth({
   onBudgetAction,
   onShowActivity,
 }: CategoryMonthProps) {
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const billingPeriod = category.billing_period ?? 'monthly';
+  const categoryBudgeted =
+    useTrackingSheetValue(trackingBudget.catBudgeted(category.id)) ?? 0;
+  const categorySpent =
+    useTrackingSheetValue(trackingBudget.catSumAmount(category.id)) ?? 0;
+  const categoryBudgetAllocation = calculateAllocationForPeriod(
+    categoryBudgeted,
+    billingPeriod,
+    allocationPeriod,
+  );
+  const categoryBalanceAllocation = categoryBudgetAllocation - Math.abs(categorySpent);
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef(null);
   const format = useFormat();
@@ -374,6 +478,18 @@ export const CategoryMonth = memo(function CategoryMonth({
           }}
         />
       </View>
+      <Field
+        name="budget-allocation"
+        width="flex"
+        style={{ textAlign: 'right', ...styles.tnum }}
+      >
+        <CellValueText
+          type="financial"
+          name={`budget-allocation-${category.id}`}
+          value={categoryBudgetAllocation}
+          className={css(makeAmountGrey(categoryBudgetAllocation) ?? {})}
+        />
+      </Field>
       <Field name="spent" width="flex" style={{ textAlign: 'right' }}>
         <View
           data-testid="category-month-spent"
@@ -457,7 +573,14 @@ export const CategoryMonth = memo(function CategoryMonth({
               goal={trackingBudget.catGoal(category.id)}
               budgeted={trackingBudget.catBudgeted(category.id)}
               longGoal={trackingBudget.catLongGoal(category.id)}
-            />
+            >
+              {props => (
+                <CellValueText
+                  {...props}
+                  value={categoryBalanceAllocation}
+                />
+              )}
+            </BalanceWithCarryover>
           </Button>
 
           <Popover

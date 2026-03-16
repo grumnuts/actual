@@ -25,7 +25,7 @@ For example:
 
 ### Code
 
-- [ ] Run [this GitHub Action](https://github.com/actualbudget/actual/actions/workflows/generate-release-pr.yml) to generate a release PR (for a regular monthly release, leave the arguments set to their default values).
+- [ ] Run [this GitHub Action](https://github.com/grumnuts/actual/actions/workflows/generate-release-pr.yml) to generate a release PR (for a regular monthly release, leave the arguments set to their default values).
 - [ ] Open the generated PR and ensure the release notes workflow has started to collate the release notes into a comment in the PR. You may need to push an empty commit in order to trigger CI.
 - [ ] After the release notes workflows in the PR has been run, copy the collated notes into a new blog post using a previous release as a template. The release notes will also need adding to the `docs/releases.md` file.
 - [ ] Fix spelling as needed.
@@ -53,7 +53,7 @@ All NPM packages should be automatically released and pushed to the NPM registry
 
 For the Windows Store desktop app, a submission will be automatically uploaded and submitted for certification. The certification process can take up to 3 business days; once complete the app will be in the Store. You can check the update status [here](https://partner.microsoft.com/en-us/dashboard) if you have permission. Note that the Store UI will not correctly reflect the submission status for about 30 minutes after submission.
 
-Finally, a draft GitHub release should be automatically created [here](https://github.com/actualbudget/actual/releases).
+Finally, a draft GitHub release should be automatically created [here](https://github.com/grumnuts/actual/releases).
 
 Once the GitHub release is published, the Flathub publish workflow will trigger for the Linux desktop app. A PR will be created against the [Actual Flathub Repository](https://github.com/flathub/com.actualbudget.actual/pulls) and the core maintainers will be assigned as reviewers. The Core team will review the PR and merge it to `master`, which will kick off a production release to the Flathub Store. It can take anywhere from hours to a few days before the app will be available in the Flathub Store.
 

@@ -85,7 +85,7 @@ The layout of the codebase in Actual Budget takes a bit of getting used to and f
 Existing issues are a good place to start, especially if you want to contribute to Actual Budget but don't know where to start, some of the things to be aware of are:
 
 1. All issues are open to be worked on by anyone.
-2. Working on the highest rated [feature requests](https://github.com/actualbudget/actual/issues?q=label%3A%22needs+votes%22+sort%3Areactions-%2B1-desc+) would also be appreciated.
+2. Working on the highest rated [feature requests](https://github.com/grumnuts/actual/issues?q=label%3A%22needs+votes%22+sort%3Areactions-%2B1-desc+) would also be appreciated.
 3. We do not assign issues to specific people.
 
 ### Submitting an Idea for Something you Want to Work On

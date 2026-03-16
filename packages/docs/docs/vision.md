@@ -59,4 +59,4 @@ Actual Budget, being community-driven means that development is driven by the co
 
 ### Third-party use
 
-Actual is [MIT licensed](https://github.com/actualbudget/actual/blob/master/LICENSE.txt) which allows for the use of the software without restriction. The Actual Budget project and community appreciate any submissions from third-party contributors to enhance and improve our amazing project. This appreciation extends to any single volunteer or company-sponsored participants alike. Let's continue to make Actual Budget the best personal finance tool together!
+Actual is [MIT licensed](https://github.com/grumnuts/actual/blob/master/LICENSE.txt) which allows for the use of the software without restriction. The Actual Budget project and community appreciate any submissions from third-party contributors to enhance and improve our amazing project. This appreciation extends to any single volunteer or company-sponsored participants alike. Let's continue to make Actual Budget the best personal finance tool together!

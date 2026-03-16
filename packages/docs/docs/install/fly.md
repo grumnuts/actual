@@ -100,7 +100,7 @@ Now that you've got the configuration file set up, you're ready to deploy your a
 First, tell Fly about Actual:
 
 ```bash
-fly launch --image actualbudget/actual-server:latest
+fly launch --image grumnuts/actual:latest
 ```
 
 This command will ask a series of questions:
@@ -150,7 +150,7 @@ Actual is now up and running. Congratulations! Consider checking out [our tour](
 When updates to Actual are released, you'll need to re-deploy your app to get the latest version.
 
 ```
-fly deploy --image actualbudget/actual-server:latest --app your-app-name
+fly deploy --image grumnuts/actual:latest --app your-app-name
 ```
 
 ### Local terminal
@@ -182,4 +182,4 @@ With these settings, Fly.io will automatically stop your instance after a few mi
 
 - **Q.** _How can I try out a beta/unstable version of Actual?_
 
-  **A.** We publish unstable releases of Actual every day. These versions may have known or unknown issues that could corrupt your budget. If you'd like to try them out, follow the [instructions to update](#updating-actual) above, but change `actualbudget/actual-server:latest` to `actualbudget/actual-server:edge`.
+   **A.** We publish unstable releases of Actual every day. These versions may have known or unknown issues that could corrupt your budget. If you'd like to try them out, follow the [instructions to update](#updating-actual) above, but change `grumnuts/actual:latest` to `grumnuts/actual:edge`.

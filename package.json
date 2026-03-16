@@ -3,14 +3,14 @@
   "version": "0.0.1",
   "private": true,
   "description": "A local-first personal finance system",
-  "homepage": "https://github.com/actualbudget/actual/",
+  "homepage": "https://github.com/grumnuts/actual/",
   "bugs": {
-    "url": "https://github.com/actualbudget/actual/issues/"
+    "url": "https://github.com/grumnuts/actual/issues/"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:actualbudget/actual.git"
+    "url": "git@github.com:grumnuts/actual.git"
   },
   "workspaces": {
     "packages": [

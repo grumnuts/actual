@@ -2,7 +2,7 @@
 
 It is possible using our deployment pipeline to run preview builds of Actual directly on Netlify.
 
-To do this, find the pull request (PR) that you would like to preview in GitHub, you can find the pull requests in scope of the preview builds [here](https://github.com/actualbudget/actual/pulls).
+To do this, find the pull request (PR) that you would like to preview in GitHub, you can find the pull requests in scope of the preview builds [here](https://github.com/grumnuts/actual/pulls).
 
 Once you have the number of the PR navigate to the following URL: https://deploy-preview-pr_number--actualbudget.netlify.app/ replacing pr_number with the number of the PR you would like to preview, for example https://deploy-preview-414--actualbudget.netlify.app/
 

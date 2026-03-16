@@ -2,7 +2,7 @@
 
 Actual is made up of lots of different _packages_ organized as a monorepo using Yarn workspaces. This article covers how they all fit together to form the project you know as Actual.
 
-All of our repositories can be found in the [Actual Budget](https://github.com/actualbudget) organization on GitHub, within that organization you will then find the repository containing the code for [Actual, Actual Server and the Docs](https://github.com/actualbudget/actual).
+All of our repositories can be found in the [grumnuts](https://github.com/grumnuts) account on GitHub, where you can find the repository containing the code for [Actual, Actual Server and the Docs](https://github.com/grumnuts/actual).
 
 The Actual monorepo contains the following main packages:
 
@@ -56,7 +56,7 @@ Synchronization server for multi-device support.
 - **Dependency**: Has a dependency on `@actual-app/web` (the desktop-client package)
 - **Deployment**: When you deploy Actual Server and run `yarn build:server` and `yarn install`, the Actual client is installed as a dependency
 
-You can see this in the [package.json](https://github.com/actualbudget/actual/blob/master/packages/sync-server/package.json) file:
+You can see this in the [package.json](https://github.com/grumnuts/actual/blob/master/packages/sync-server/package.json) file:
 
 ```json
 "dependencies": {

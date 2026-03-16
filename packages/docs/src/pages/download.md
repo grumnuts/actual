@@ -27,11 +27,11 @@ The simplest way to use Actual is to download the desktop application. This will
       },
       {
         label: 'Manual Download (x64)',
-        url: 'https://github.com/actualbudget/actual/releases/latest/download/Actual-windows-x64.exe'
+        url: 'https://github.com/grumnuts/actual/releases/latest/download/Actual-windows-x64.exe'
       },
       {
         label: 'Manual Download (arm64)',
-        url: 'https://github.com/actualbudget/actual/releases/latest/download/Actual-windows-arm64.exe'
+        url: 'https://github.com/grumnuts/actual/releases/latest/download/Actual-windows-arm64.exe'
       },
     ]}
   />
@@ -42,11 +42,11 @@ platform="macOS"
 links={[
 {
 label: 'Intel (x64)',
-url: 'https://github.com/actualbudget/actual/releases/latest/download/Actual-mac-x64.dmg'
+url: 'https://github.com/grumnuts/actual/releases/latest/download/Actual-mac-x64.dmg'
 },
 {
 label: 'Apple Silicon (arm64)',
-url: 'https://github.com/actualbudget/actual/releases/latest/download/Actual-mac-arm64.dmg'
+url: 'https://github.com/grumnuts/actual/releases/latest/download/Actual-mac-arm64.dmg'
 }
 ]}
 />
@@ -61,11 +61,11 @@ url: 'https://flathub.org/en/apps/com.actualbudget.actual'
 },
 {
 label: 'AppImage (x64)',
-url: 'https://github.com/actualbudget/actual/releases/latest/download/Actual-linux-x86_64.AppImage'
+url: 'https://github.com/grumnuts/actual/releases/latest/download/Actual-linux-x86_64.AppImage'
 },
 {
 label: 'AppImage (arm64)',
-url: 'https://github.com/actualbudget/actual/releases/latest/download/Actual-linux-arm64.AppImage'
+url: 'https://github.com/grumnuts/actual/releases/latest/download/Actual-linux-arm64.AppImage'
 }
 ]}
 />

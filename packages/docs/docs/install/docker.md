@@ -5,7 +5,7 @@ sidebar_position: 2
 
 ## Hosting Actual on a home server with Docker
 
-Actual is also available as a Docker image ready to be run in your own custom environment. We publish the image both to [Docker Hub](https://hub.docker.com/r/actualbudget/actual-server) (as `actualbudget/actual-server`) and [GitHub's container registry](https://ghcr.io/actualbudget/actual) (as `ghcr.io/actualbudget/actual`). Actual should function the same when pulled from either registry, so you can choose whichever one you prefer.
+Actual is also available as a Docker image ready to be run in your own custom environment. We publish the image both to [Docker Hub](https://hub.docker.com/r/grumnuts/actual) (as `grumnuts/actual`) and [GitHub's container registry](https://ghcr.io/grumnuts/actual) (as `ghcr.io/grumnuts/actual`). Actual should function the same when pulled from either registry, so you can choose whichever one you prefer.
 
 ## Docker Tags
 
@@ -29,7 +29,7 @@ The `edge` tag is updated every time a commit is pushed to the `master` branch. 
 
 Pre-requisites: Docker
 
-You can use the [`docker-compose.yml` file included in the `actual` repository](https://github.com/actualbudget/actual/blob/master/packages/sync-server/docker-compose.yml) to run the latest stable version of the server.
+You can use the [`docker-compose.yml` file included in the `actual` repository](https://github.com/grumnuts/actual/blob/master/packages/sync-server/docker-compose.yml) to run the latest stable version of the server.
 
 To create and run the container:
 
@@ -52,7 +52,7 @@ Pre-requisites: Docker
 Alternatively to using docker compose, you may also launch docker using this command. This command, as shown, will launch the latest stable build of Actual.
 
 ```bash
-$ docker run --pull=always --restart=unless-stopped -d -p 5006:5006 -v YOUR/PATH/TO/DATA:/data --name my_actual_budget actualbudget/actual-server:latest
+$ docker run --pull=always --restart=unless-stopped -d -p 5006:5006 -v YOUR/PATH/TO/DATA:/data --name my_actual_budget grumnuts/actual:latest
 ```
 
 `--pull=always` -- always pulls the latest image
@@ -67,7 +67,7 @@ $ docker run --pull=always --restart=unless-stopped -d -p 5006:5006 -v YOUR/PATH
 
 `--name my_actual_budget` -- gives your new docker container a name (change this to whatever you want)
 
-`actualbudget/actual-server:latest` -- defines which image you want to pull and launch.
+`grumnuts/actual:latest` -- defines which image you want to pull and launch.
 
 ### Update Docker container using docker command
 
@@ -80,13 +80,13 @@ $ docker container rm my_actual_budget
 ```
 
 ```bash
-$ docker run --pull=always --restart=unless-stopped -d -p 5006:5006 -v YOUR/PATH/TO/DATA:/data --name my_actual_budget actualbudget/actual-server:latest
+$ docker run --pull=always --restart=unless-stopped -d -p 5006:5006 -v YOUR/PATH/TO/DATA:/data --name my_actual_budget grumnuts/actual:latest
 ```
 
 You can place all of these in a batch script for a 1 click or single command update.
 
 ```bash
-$ docker stop my_actual_budget && docker container rm my_actual_budget && docker run --pull=always --restart=unless-stopped -d -p 5006:5006 -v YOUR/PATH/TO/DATA:/data --name my_actual_budget actualbudget/actual-server:latest
+$ docker stop my_actual_budget && docker container rm my_actual_budget && docker run --pull=always --restart=unless-stopped -d -p 5006:5006 -v YOUR/PATH/TO/DATA:/data --name my_actual_budget grumnuts/actual:latest
 ```
 
 ## Test connection within local network

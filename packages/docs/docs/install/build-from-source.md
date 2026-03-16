@@ -13,7 +13,7 @@ For most cases, we suggest opting for one of the simpler alternatives:
 
 :::
 
-Actual server is used for syncing changes across devices. It comes with the latest version of the [Actual web client](https://github.com/actualbudget/actual).
+Actual server is used for syncing changes across devices. It comes with the latest version of the [Actual web client](https://github.com/grumnuts/actual).
 
 ## Prerequisites
 
@@ -29,10 +29,10 @@ Actual server is used for syncing changes across devices. It comes with the late
 
 ## Installing Actual
 
-1. After the prerequisites are fulfilled, open bash and clone the [Actual](https://github.com/actualbudget/actual) project in your project root directory where you want to install Actual.
+1. After the prerequisites are fulfilled, open bash and clone the [Actual](https://github.com/grumnuts/actual) project in your project root directory where you want to install Actual.
 
 ```bash
-git clone https://github.com/actualbudget/actual.git
+git clone https://github.com/grumnuts/actual.git
 ```
 
 2. Navigate to the Actual in your project root directory.
@@ -132,5 +132,5 @@ If you would like to use Actual in a language other than English, additional set
    ```
 2. Clone the separate translations repository.
    ```bash
-   git clone https://github.com/actualbudget/translations locale
+   git clone https://github.com/grumnuts/translations locale
    ```

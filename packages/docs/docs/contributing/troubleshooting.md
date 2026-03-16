@@ -157,4 +157,4 @@ If you're still experiencing issues:
 2. Review the [Testing Guide](./testing.md) for test-related issues
 3. Check the [Code Style Guide](./code-style.md) for code-related issues
 4. Ask for help in the [Discord community](https://discord.gg/pRYNYr4W5A)
-5. Search or create an issue on [GitHub](https://github.com/actualbudget/actual/issues)
+5. Search or create an issue on [GitHub](https://github.com/grumnuts/actual/issues)

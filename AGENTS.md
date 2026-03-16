@@ -6,7 +6,7 @@ This guide provides comprehensive information for AI agents (like Cursor) workin
 
 **Actual Budget** is a local-first personal finance tool written in TypeScript/JavaScript. It's 100% free and open-source with synchronization capabilities across devices.
 
-- **Repository**: https://github.com/actualbudget/actual
+- **Repository**: https://github.com/grumnuts/actual
 - **Community Docs**: Documentation is part of the monorepo at `packages/docs/`. Published at https://actualbudget.org/docs
 - **License**: MIT
 - **Primary Language**: TypeScript (with React)
@@ -537,7 +537,7 @@ Icons in `packages/component-library/src/icons/` are auto-generated. Don't manua
 
 - **Community Documentation**: https://actualbudget.org/docs/contributing/
 - **Discord Community**: https://discord.gg/pRYNYr4W5A
-- **GitHub Issues**: https://github.com/actualbudget/actual/issues
+- **GitHub Issues**: https://github.com/grumnuts/actual/issues
 - **Feature Requests**: Label "needs votes" sorted by reactions
 
 ## Code Quality Checklist

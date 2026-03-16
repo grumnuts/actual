@@ -17,8 +17,7 @@ permissions:
 
 env:
   IMAGES: |
-    ${{ !github.event.repository.fork && 'actualbudget/actual-server' || '' }}
-    ghcr.io/${{ github.repository_owner }}/actual-server
+    ${{ !github.event.repository.fork && 'grumnuts/actual' || '' }}
     ghcr.io/${{ github.repository_owner }}/actual
 
   # Creates the following tags:
@@ -82,11 +81,11 @@ jobs:
           push: false
           load: true
           file: packages/sync-server/docker/${{ matrix.os }}.Dockerfile
-          tags: actualbudget/actual-server-testing
+          tags: grumnuts/actual-testing
 
       - name: Test that the docker image boots
         run: |
-          docker run --detach --network=host actualbudget/actual-server-testing
+          docker run --detach --network=host grumnuts/actual-testing
           sleep 10
           curl --fail -sS -LI -w '%{http_code}\n' --retry 20 --retry-delay 1 --retry-connrefused localhost:5006
 

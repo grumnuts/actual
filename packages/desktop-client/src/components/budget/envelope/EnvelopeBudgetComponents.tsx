@@ -16,6 +16,10 @@ import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
 
 import * as monthUtils from 'loot-core/shared/months';
+import {
+  calculateAllocationForPeriod,
+  type BudgetAllocationPeriod,
+} from 'loot-core/shared/weeklyAllocation';
 
 import type { CategoryGroupMonthProps, CategoryMonthProps } from '..';
 
@@ -32,14 +36,17 @@ import {
 import { Field, Row, SheetCell } from '@desktop-client/components/table';
 import type { SheetCellProps } from '@desktop-client/components/table';
 import { useCategoryScheduleGoalTemplateIndicator } from '@desktop-client/hooks/useCategoryScheduleGoalTemplateIndicator';
+import { useCategories } from '@desktop-client/hooks/useCategories';
 import { useContextMenu } from '@desktop-client/hooks/useContextMenu';
 import { useFormat } from '@desktop-client/hooks/useFormat';
+import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { useNavigate } from '@desktop-client/hooks/useNavigate';
 import { useSheetName } from '@desktop-client/hooks/useSheetName';
 import { useSheetValue } from '@desktop-client/hooks/useSheetValue';
 import { useUndo } from '@desktop-client/hooks/useUndo';
 import type { Binding, SheetFields } from '@desktop-client/spreadsheet';
 import { envelopeBudget } from '@desktop-client/spreadsheet/bindings';
+import { useConvertedCategoryTotal } from '@desktop-client/components/budget/useConvertedCategoryTotal';
 
 export function useEnvelopeSheetName<
   FieldName extends SheetFields<'envelope-budget'>,
@@ -71,14 +78,51 @@ const headerLabelStyle: CSSProperties = {
   flex: 1,
   padding: '0 5px',
   textAlign: 'right',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'stretch',
 };
 
 const cellStyle: CSSProperties = {
   color: theme.tableHeaderText,
   fontWeight: 600,
+  textAlign: 'right',
+  width: '100%',
 };
 
+function getAllocationPeriodLabel(
+  allocationPeriod: BudgetAllocationPeriod,
+  t: (key: string) => string,
+) {
+  if (allocationPeriod === 'fortnightly') {
+    return t('Fortnight');
+  }
+
+  if (allocationPeriod === 'monthly') {
+    return t('Month');
+  }
+
+  return t('Week');
+}
+
 export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
+  const { t } = useTranslation();
+  const { data: { grouped: categoryGroups } = { grouped: [] } } = useCategories();
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const expenseCategories = categoryGroups.flatMap(group =>
+    group.is_income ? [] : (group.categories ?? []),
+  );
+  const totalBudgetAllocation = useConvertedCategoryTotal({
+    categories: expenseCategories,
+    allocationPeriod,
+    bindingFactory: envelopeBudget.catBudgeted,
+    sheetBinding: envelopeBudget.catBudgeted('total-budget-allocation'),
+  });
+  const totalSpent = useEnvelopeSheetValue(envelopeBudget.totalSpent) ?? 0;
+  const totalBalanceAllocation = totalBudgetAllocation - Math.abs(totalSpent);
+
   return (
     <View
       style={{
@@ -91,20 +135,38 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
       }}
     >
       <View style={headerLabelStyle}>
-        <Text style={{ color: theme.tableHeaderText }}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
           <Trans>Budgeted</Trans>
         </Text>
         <EnvelopeCellValue
           binding={envelopeBudget.totalBudgeted}
           type="financial"
         >
+          {props => <CellValueText {...props} value={-props.value} style={cellStyle} />}
+        </EnvelopeCellValue>
+      </View>
+      <View style={headerLabelStyle}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
+          {t('Budget ({{period}})', {
+            period: getAllocationPeriodLabel(allocationPeriod, t),
+          })}
+        </Text>
+        <EnvelopeCellValue
+          binding={envelopeBudget.totalBudgeted}
+          type="financial"
+        >
           {props => (
-            <CellValueText {...props} value={-props.value} style={cellStyle} />
+            <CellValueText
+              {...props}
+              name="budget-allocation-total"
+              value={totalBudgetAllocation}
+              style={cellStyle}
+            />
           )}
         </EnvelopeCellValue>
       </View>
       <View style={headerLabelStyle}>
-        <Text style={{ color: theme.tableHeaderText }}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
           <Trans>Spent</Trans>
         </Text>
         <EnvelopeCellValue binding={envelopeBudget.totalSpent} type="financial">
@@ -112,14 +174,21 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
         </EnvelopeCellValue>
       </View>
       <View style={headerLabelStyle}>
-        <Text style={{ color: theme.tableHeaderText }}>
+        <Text style={{ color: theme.tableHeaderText, textAlign: 'right' }}>
           <Trans>Balance</Trans>
         </Text>
         <EnvelopeCellValue
           binding={envelopeBudget.totalBalance}
           type="financial"
         >
-          {props => <CellValueText {...props} style={cellStyle} />}
+          {props => (
+            <CellValueText
+              {...props}
+              name="balance-allocation-total"
+              value={totalBalanceAllocation}
+              style={cellStyle}
+            />
+          )}
         </EnvelopeCellValue>
       </View>
     </View>
@@ -147,7 +216,19 @@ export const ExpenseGroupMonth = memo(function ExpenseGroupMonth({
   month,
   group,
 }: CategoryGroupMonthProps) {
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
   const { id } = group;
+  const categories = group.categories ?? [];
+  const groupBudgetAllocation = useConvertedCategoryTotal({
+    categories,
+    allocationPeriod,
+    bindingFactory: envelopeBudget.catBudgeted,
+    sheetBinding: envelopeBudget.catBudgeted(id),
+  });
+  const groupSpent = useEnvelopeSheetValue(envelopeBudget.groupSumAmount(id)) ?? 0;
+  const groupBalanceAllocation = groupBudgetAllocation - Math.abs(groupSpent);
 
   return (
     <View
@@ -169,30 +250,37 @@ export const ExpenseGroupMonth = memo(function ExpenseGroupMonth({
           type: 'financial',
         }}
       />
-      <EnvelopeSheetCell
-        name="spent"
-        width="flex"
-        textAlign="right"
-        style={{ fontWeight: 600, ...styles.tnum }}
-        valueProps={{
-          binding: envelopeBudget.groupSumAmount(id),
-          type: 'financial',
-        }}
-      />
-      <EnvelopeSheetCell
+      <Field name="budget-allocation" width="flex" style={{ textAlign: 'right' }}>
+        <CellValueText
+          type="financial"
+          name={`group-budget-allocation-${id}`}
+          value={groupBudgetAllocation}
+          style={{ fontWeight: 600, ...styles.tnum }}
+        />
+      </Field>
+      <Field name="spent" width="flex" style={{ textAlign: 'right' }}>
+        <EnvelopeCellValue
+          binding={envelopeBudget.groupSumAmount(id)}
+          type="financial"
+        >
+          {props => <CellValueText {...props} style={{ fontWeight: 600, ...styles.tnum }} />}
+        </EnvelopeCellValue>
+      </Field>
+      <Field
         name="balance"
         width="flex"
-        textAlign="right"
         style={{
-          fontWeight: 600,
+          textAlign: 'right',
           paddingRight: styles.monthRightPadding,
-          ...styles.tnum,
         }}
-        valueProps={{
-          binding: envelopeBudget.groupBalance(id),
-          type: 'financial',
-        }}
-      />
+      >
+        <CellValueText
+          type="financial"
+          name={`group-balance-allocation-${id}`}
+          value={groupBalanceAllocation}
+          style={{ fontWeight: 600, ...styles.tnum }}
+        />
+      </Field>
     </View>
   );
 });
@@ -206,6 +294,20 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
   onShowActivity,
 }: CategoryMonthProps) {
   const { t } = useTranslation();
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const billingPeriod = category.billing_period ?? 'monthly';
+  const categoryBudgeted =
+    useEnvelopeSheetValue(envelopeBudget.catBudgeted(category.id)) ?? 0;
+  const categorySpent =
+    useEnvelopeSheetValue(envelopeBudget.catSumAmount(category.id)) ?? 0;
+  const categoryBudgetAllocation = calculateAllocationForPeriod(
+    categoryBudgeted,
+    billingPeriod,
+    allocationPeriod,
+  );
+  const categoryBalanceAllocation = categoryBudgetAllocation - Math.abs(categorySpent);
   const format = useFormat();
 
   const budgetMenuTriggerRef = useRef(null);
@@ -402,6 +504,18 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
           }}
         />
       </View>
+      <Field
+        name="budget-allocation"
+        width="flex"
+        style={{ textAlign: 'right', ...styles.tnum }}
+      >
+        <CellValueText
+          type="financial"
+          name={`budget-allocation-${category.id}`}
+          value={categoryBudgetAllocation}
+          className={css(makeAmountGrey(categoryBudgetAllocation) ?? {})}
+        />
+      </Field>
       <Field name="spent" width="flex" style={{ textAlign: 'right' }}>
         <View
           data-testid="category-month-spent"
@@ -493,7 +607,14 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
             budgeted={envelopeBudget.catBudgeted(category.id)}
             longGoal={envelopeBudget.catLongGoal(category.id)}
             tooltipDisabled={balanceMenuOpen}
-          />
+          >
+            {props => (
+              <CellValueText
+                {...props}
+                value={categoryBalanceAllocation}
+              />
+            )}
+            </BalanceWithCarryover>
         </Button>
 
         <Popover

@@ -1,0 +1,70 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# VCS and editor metadata
+.git
+.github
+.vscode
+.cursor
+.devcontainer
+
+# Repo docs and process files
+AGENTS.md
+CLAUDE.md
+ACTUAL_FORK_PROMPT.md
+CODEOWNERS
+CODE_REVIEW_GUIDELINES.md
+CONTRIBUTING.md
+README.md
+LICENSE.txt
+upcoming-release-notes
+demo.png
+
+# Yarn cache artifacts
+.yarn/cache
+.yarn/unplugged
+
+# Build and test artifacts
+.lage
+packages/*/dist
+packages/*/lib-dist
+packages/*/build
+packages/*/coverage
+packages/desktop-client/dev-dist
+packages/desktop-client/playwright-report
+packages/desktop-client/test-results
+packages/desktop-client/e2e
+packages/desktop-electron/build
+packages/desktop-electron/screenshots
+packages/desktop-electron/e2e
+packages/docs
+packages/ci-actions
+
+# Test-only source and snapshots
+**/__tests__
+**/__snapshots__
+**/*.test.*
+**/*.spec.*
+**/*-snapshots
+
+# Non-runtime markdown/docs inside packages
+packages/*/README.md
+packages/**/*.md
+
+# Local/runtime data
+data
+
+# Logs and temp files
+*.log
+.DS_Store
+
+# Local docker/git metadata
+docker-compose.yml
+sync-server.Dockerfile
+.gitattributes
+.gitignore
+.editorconfig
+.nvmrc
+.oxfmtrc.json
+.oxlintrc.json

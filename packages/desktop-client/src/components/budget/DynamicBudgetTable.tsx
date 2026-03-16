@@ -7,6 +7,7 @@ import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { View } from '@actual-app/components/view';
 
 import * as monthUtils from 'loot-core/shared/months';
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 
 import { useBudgetMonthCount } from './BudgetMonthCountContext';
 import { BudgetPageHeader } from './BudgetPageHeader';
@@ -51,6 +52,9 @@ const DynamicBudgetTable = ({
 }: DynamicBudgetTableProps) => {
   const { setDisplayMax } = useBudgetMonthCount();
   const [categoryExpandedStatePref] = useGlobalPref('categoryExpandedState');
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
   const categoryExpandedState = categoryExpandedStatePref ?? 0;
   const categorySidebarWidth = getCategorySidebarWidth(categoryExpandedState);
 
@@ -81,24 +85,32 @@ const DynamicBudgetTable = ({
   useHotkeys(
     'left',
     () => {
+      if (allocationPeriod !== 'monthly') {
+        return;
+      }
+
       _onMonthSelect(monthUtils.prevMonth(startMonth));
     },
     {
       preventDefault: true,
       scopes: ['app'],
     },
-    [_onMonthSelect, startMonth],
+    [_onMonthSelect, startMonth, allocationPeriod],
   );
   useHotkeys(
     'right',
     () => {
+      if (allocationPeriod !== 'monthly') {
+        return;
+      }
+
       _onMonthSelect(monthUtils.nextMonth(startMonth));
     },
     {
       preventDefault: true,
       scopes: ['app'],
     },
-    [_onMonthSelect, startMonth],
+    [_onMonthSelect, startMonth, allocationPeriod],
   );
   useHotkeys(
     '0',

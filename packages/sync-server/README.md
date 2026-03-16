@@ -1,4 +1,4 @@
-This is the main project to run [Actual](https://github.com/actualbudget/actual), a local-first personal finance tool. It comes with the latest version of Actual, and a server to persist changes and make data available across all devices.
+This is the main project to run [Actual](https://github.com/grumnuts/actual), a local-first personal finance tool. It comes with the latest version of Actual, and a server to persist changes and make data available across all devices.
 
 ### Getting Started
 
@@ -61,6 +61,6 @@ We have a wide range of documentation on how to use Actual. This is all availabl
 
 ### Feature Requests
 
-Current feature requests can be seen [here](https://github.com/actualbudget/actual/issues?q=is%3Aissue+label%3A%22needs+votes%22+sort%3Areactions-%2B1-desc). Vote for your favorite requests by reacting 👍 to the top comment of the request.
+Current feature requests can be seen [here](https://github.com/grumnuts/actual/issues?q=is%3Aissue+label%3A%22needs+votes%22+sort%3Areactions-%2B1-desc). Vote for your favorite requests by reacting 👍 to the top comment of the request.
 
 To add new feature requests, open a new Issue of the "Feature Request" type.

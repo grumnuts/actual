@@ -1,7 +1,7 @@
 # Custom Themes
 
 :::warning
-This is an **experimental feature**. That means we're still working on finishing it. There may be bugs, missing functionality or incomplete documentation, and we may decide to remove the feature in a future release. If you have any feedback, please [post a comment on GitHub](https://github.com/actualbudget/actual/issues/6607) or post a message in the Discord.
+This is an **experimental feature**. That means we're still working on finishing it. There may be bugs, missing functionality or incomplete documentation, and we may decide to remove the feature in a future release. If you have any feedback, please [post a comment on GitHub](https://github.com/grumnuts/actual/issues/6607) or post a message in the Discord.
 :::
 :::warning
 All functionality described here may not be available in the latest stable release. See [Experimental Features](/docs/experimental/) for instructions to enable experimental features. Use the `edge` images for the latest implementation.
@@ -172,13 +172,13 @@ your-theme-repo/
 }
 ```
 
-The theme can then be referenced in the catalog using the format `owner/repo` (e.g., `actualbudget/demo-theme`).
+The theme can then be referenced in the catalog using the format `owner/repo` (e.g., `grumnuts/demo-theme`).
 
 When your theme is added to the catalog, it will display a color palette preview. The palette is defined in the catalog JSON file and should include 6 representative colors from your theme (typically background colors, accent colors, and text colors).
 
 ### Example Theme
 
-For a complete example of a custom theme, check out the [demo theme repository](https://github.com/actualbudget/demo-theme). This repository contains multiple theme variations and demonstrates the proper structure and format.
+For a complete example of a custom theme, check out the [demo theme repository](https://github.com/grumnuts/demo-theme). This repository contains multiple theme variations and demonstrates the proper structure and format.
 
 The demo theme includes examples of:
 

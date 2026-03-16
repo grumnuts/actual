@@ -20,7 +20,7 @@ There are no strings attached; it's just a chance to explore Actual.
 ## I want to run Actual on my computer.
 
 If you plan to use Actual on a single computer and don't need it on your mobile or tablet,
-you can [download the stand-alone software](https://github.com/actualbudget/actual/releases).
+you can [download the stand-alone software](https://github.com/grumnuts/actual/releases).
 
 ## I want the complete package but do not know how to run a server.
 

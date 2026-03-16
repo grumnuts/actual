@@ -7,5 +7,5 @@ contact_links:
     url: https://discord.gg/pRYNYr4W5A
     about: Need help with something? Having troubles setting up? Or perhaps issues using the API? Reach out to the community on Discord.
   - name: Translations
-    url: https://hosted.weblate.org/projects/actualbudget/actual/
+    url: https://hosted.weblate.org/projects/grumnuts/actual/
     about: Found a string that needs a better translation? Add your suggestion or upvote an existing one in Weblate.

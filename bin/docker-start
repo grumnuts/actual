@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 #####################################################
 # This startup script is used by the docker container
@@ -7,7 +8,7 @@
 #####################################################
 
 if [ ! -d "node_modules" ] || [ "$(ls -A node_modules)" = "" ]; then
-    yarn
+    yarn install --immutable
 fi
 
 BROWSER=0 yarn start:browser

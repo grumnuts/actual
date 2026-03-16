@@ -25,7 +25,7 @@ The formatting options allow you to select the following:
 
 ### Language
 
-The language choice alters the display language of all text. If you encounter a translation error, feel free to make a suggestion on [Weblate](https://hosted.weblate.org/projects/actualbudget/actual/).
+The language choice alters the display language of all text. If you encounter a translation error, feel free to make a suggestion on [Weblate](https://hosted.weblate.org/projects/grumnuts/actual/).
 
 ![Image of language setting](/img/using-actual/actual-languages.webp)
 

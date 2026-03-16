@@ -1,6 +1,6 @@
 # Actual Budget — grumnuts fork
 
-> **This is a personal fork of [Actual Budget](https://github.com/actualbudget/actual) with added support for weekly and fortnightly budget allocations.**
+> **This is a personal fork of Actual Budget with added support for weekly and fortnightly budget allocations.**
 
 ---
 
@@ -87,7 +87,7 @@ yarn start
 
 For anything specific to this fork (weekly/fortnightly features), [open an issue here](https://github.com/grumnuts/actual/issues).
 
-For bugs or features in the core app, please check the [upstream repo](https://github.com/actualbudget/actual) first.
+For core app bugs/features, please open an issue in this repository so they can be triaged here.
 
 ---
 
@@ -103,4 +103,4 @@ MIT — same as upstream. See [LICENSE](./LICENSE) for details.
 
 ---
 
-*Forked from [actualbudget/actual](https://github.com/actualbudget/actual). Upstream does great work — go give them a star.*
+*Originally forked from the main Actual Budget project.*

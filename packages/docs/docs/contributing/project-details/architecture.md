@@ -16,7 +16,7 @@ In the web app, the background server runs in a [web worker](https://developer.m
 
 In the Electron app, the background server runs as a [Node.js child process](https://nodejs.org/api/child_process.html) which communicates with the frontend over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API). This allows the desktop app to use full Node.js capabilities while maintaining security through process isolation.
 
-Details of the motivation behind the usage of WebSockets in the Electron app can be found in [Pull Request #1003](https://github.com/actualbudget/actual/pull/1003).
+Details of the motivation behind the usage of WebSockets in the Electron app can be found in [Pull Request #1003](https://github.com/grumnuts/actual/pull/1003).
 
 ## Core Package Structure
 

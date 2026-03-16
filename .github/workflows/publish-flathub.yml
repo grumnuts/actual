@@ -103,11 +103,11 @@ jobs:
 
           # Replace x86_64 entry
           sed -i "/x86_64.AppImage/{n;s|sha256:.*|sha256: ${{ env.APPIMAGE_X64_SHA256 }}|}" com.actualbudget.actual.yml
-          sed -i "/x86_64.AppImage/s|url:.*|url: https://github.com/actualbudget/actual/releases/download/v${VERSION}/Actual-linux-x86_64.AppImage|" com.actualbudget.actual.yml
+          sed -i "/x86_64.AppImage/s|url:.*|url: https://github.com/grumnuts/actual/releases/download/v${VERSION}/Actual-linux-x86_64.AppImage|" com.actualbudget.actual.yml
 
           # Replace arm64 entry
           sed -i "/arm64.AppImage/{n;s|sha256:.*|sha256: ${{ env.APPIMAGE_ARM64_SHA256 }}|}" com.actualbudget.actual.yml
-          sed -i "/arm64.AppImage/s|url:.*|url: https://github.com/actualbudget/actual/releases/download/v${VERSION}/Actual-linux-arm64.AppImage|" com.actualbudget.actual.yml
+          sed -i "/arm64.AppImage/s|url:.*|url: https://github.com/grumnuts/actual/releases/download/v${VERSION}/Actual-linux-arm64.AppImage|" com.actualbudget.actual.yml
 
           echo "Updated manifest:"
           cat com.actualbudget.actual.yml
