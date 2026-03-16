@@ -1,5 +1,12 @@
 import type { CategoryGroupEntity } from './category-group';
 
+export type BillingPeriod =
+  | 'weekly'
+  | 'fortnightly'
+  | 'monthly'
+  | 'quarterly'
+  | 'annually';
+
 export type CategoryEntity = {
   id: string;
   name: string;
@@ -10,4 +17,9 @@ export type CategoryEntity = {
   sort_order?: number;
   tombstone?: boolean;
   hidden?: boolean;
+  billing_period?: BillingPeriod;
+  /** Budget amount for the chosen billing period, stored in cents (integer). */
+  weekly_allocation_amount?: number;
+  /** Manual override for weekly allocation, in cents. 0 means auto-calculate. */
+  weekly_allocation_override?: number;
 };

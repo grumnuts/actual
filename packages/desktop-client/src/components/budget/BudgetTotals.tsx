@@ -15,7 +15,12 @@ import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 
 import { RenderMonths } from './RenderMonths';
-import { getScrollbarWidth } from './util';
+import {
+  BILLING_PERIOD_COLUMN_WIDTH,
+  getCategoryNameColumnWidth,
+  getCategorySidebarWidth,
+  getScrollbarWidth,
+} from './util';
 
 import { useBudgetComponents } from '.';
 
@@ -35,7 +40,10 @@ export const BudgetTotals = memo(function BudgetTotals({
   const { t } = useTranslation();
   const [categoryExpandedStatePref, setCategoryExpandedStatePref] =
     useGlobalPref('categoryExpandedState');
+  const [budgetAllocationPeriod, setBudgetAllocationPeriod] =
+    useGlobalPref('budgetAllocationPeriod');
   const categoryExpandedState = categoryExpandedStatePref ?? 0;
+  const allocationPeriod = budgetAllocationPeriod ?? 'weekly';
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef(null);
 
@@ -63,7 +71,7 @@ export const BudgetTotals = memo(function BudgetTotals({
     <View
       data-testid="budget-totals"
       style={{
-        backgroundColor: theme.budgetCurrentMonth, //use budget colors, not generic table colors
+        backgroundColor: theme.budgetCurrentMonth,
         flexDirection: 'row',
         flexShrink: 0,
         boxShadow: styles.cardShadow,
@@ -82,103 +90,153 @@ export const BudgetTotals = memo(function BudgetTotals({
     >
       <View
         style={{
-          width: 200 + 100 * categoryExpandedState,
+          width: getCategorySidebarWidth(categoryExpandedState),
           color: theme.tableHeaderText,
-          justifyContent: 'center',
-          paddingLeft: 5,
-          paddingRight: 5,
           display: 'flex',
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'stretch',
           userSelect: 'none',
           WebkitUserSelect: 'none',
         }}
       >
-        <Button
-          variant="bare"
-          aria-label={getExpandStateLabel()}
-          onPress={cycleExpandedState}
-          className="hover-visible"
+        <View
           style={{
-            color: 'currentColor',
-            padding: 3,
-            marginRight: 10,
+            width: getCategoryNameColumnWidth(categoryExpandedState),
+            justifyContent: 'center',
+            paddingLeft: 5,
+            paddingRight: 5,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
           }}
         >
-          {categoryExpandedState === 0 ? (
-            <SvgArrowButtonSingleLeft1
-              style={{
-                width: 12,
-                height: 12,
-              }}
-            />
-          ) : categoryExpandedState === 1 ? (
-            <SvgArrowButtonLeft1
-              style={{
-                width: 12,
-                height: 12,
-              }}
-            />
-          ) : (
-            <SvgArrowButtonRight1
-              style={{
-                width: 12,
-                height: 12,
-              }}
-            />
-          )}
-        </Button>
-        <View style={{ flexGrow: '1' }}>
-          <Trans>Category</Trans>
-        </View>
-        <Button
-          ref={triggerRef}
-          variant="bare"
-          aria-label={t('Menu')}
-          onPress={() => setMenuOpen(true)}
-          style={{ color: 'currentColor', padding: 3 }}
-        >
-          <SvgDotsHorizontalTriple
-            width={15}
-            height={15}
-            style={{ color: theme.tableHeaderText }}
-          />
-        </Button>
-
-        <Popover
-          triggerRef={triggerRef}
-          isOpen={menuOpen}
-          onOpenChange={() => setMenuOpen(false)}
-          style={{ width: 200 }}
-        >
-          <Menu
-            onMenuSelect={type => {
-              if (type === 'toggle-visibility') {
-                toggleHiddenCategories();
-              } else if (type === 'expandAllCategories') {
-                expandAllCategories();
-              } else if (type === 'collapseAllCategories') {
-                collapseAllCategories();
-              }
-              setMenuOpen(false);
+          <Button
+            variant="bare"
+            aria-label={getExpandStateLabel()}
+            onPress={cycleExpandedState}
+            className="hover-visible"
+            style={{
+              color: 'currentColor',
+              padding: 3,
+              marginRight: 10,
             }}
-            items={[
-              {
-                name: 'toggle-visibility',
-                text: t('Toggle hidden categories'),
-              },
-              {
-                name: 'expandAllCategories',
-                text: t('Expand all'),
-              },
-              {
-                name: 'collapseAllCategories',
-                text: t('Collapse all'),
-              },
-            ]}
-          />
-        </Popover>
+          >
+            {categoryExpandedState === 0 ? (
+              <SvgArrowButtonSingleLeft1
+                style={{
+                  width: 12,
+                  height: 12,
+                }}
+              />
+            ) : categoryExpandedState === 1 ? (
+              <SvgArrowButtonLeft1
+                style={{
+                  width: 12,
+                  height: 12,
+                }}
+              />
+            ) : (
+              <SvgArrowButtonRight1
+                style={{
+                  width: 12,
+                  height: 12,
+                }}
+              />
+            )}
+          </Button>
+          <View style={{ flexGrow: '1' }}>
+            <Trans>Category</Trans>
+          </View>
+          <Button
+            ref={triggerRef}
+            variant="bare"
+            aria-label={t('Menu')}
+            onPress={() => setMenuOpen(true)}
+            style={{ color: 'currentColor', padding: 3 }}
+          >
+            <SvgDotsHorizontalTriple
+              width={15}
+              height={15}
+              style={{ color: theme.tableHeaderText }}
+            />
+          </Button>
+
+          <Popover
+            triggerRef={triggerRef}
+            isOpen={menuOpen}
+            onOpenChange={() => setMenuOpen(false)}
+            style={{ width: 200 }}
+          >
+            <Menu
+              onMenuSelect={type => {
+                if (type === 'toggle-visibility') {
+                  toggleHiddenCategories();
+                } else if (type === 'expandAllCategories') {
+                  expandAllCategories();
+                } else if (type === 'collapseAllCategories') {
+                  collapseAllCategories();
+                } else if (type === 'allocation-period-weekly') {
+                  setBudgetAllocationPeriod('weekly');
+                } else if (type === 'allocation-period-fortnightly') {
+                  setBudgetAllocationPeriod('fortnightly');
+                } else if (type === 'allocation-period-monthly') {
+                  setBudgetAllocationPeriod('monthly');
+                }
+                setMenuOpen(false);
+              }}
+              items={[
+                {
+                  name: 'toggle-visibility',
+                  text: t('Toggle hidden categories'),
+                },
+                {
+                  name: 'expandAllCategories',
+                  text: t('Expand all'),
+                },
+                {
+                  name: 'collapseAllCategories',
+                  text: t('Collapse all'),
+                },
+                Menu.line,
+                {
+                  name: 'allocation-period-weekly',
+                  text: t('Weekly{{selected}}', {
+                    selected: allocationPeriod === 'weekly' ? ' ✓' : '',
+                  }),
+                },
+                {
+                  name: 'allocation-period-fortnightly',
+                  text: t('Fortnightly{{selected}}', {
+                    selected: allocationPeriod === 'fortnightly' ? ' ✓' : '',
+                  }),
+                },
+                {
+                  name: 'allocation-period-monthly',
+                  text: t('Monthly{{selected}}', {
+                    selected: allocationPeriod === 'monthly' ? ' ✓' : '',
+                  }),
+                },
+              ]}
+            />
+          </Popover>
+        </View>
+
+        <View
+          style={{
+            width: BILLING_PERIOD_COLUMN_WIDTH,
+            borderLeft: `1px solid ${theme.tableBorder}`,
+            flexShrink: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            display: 'flex',
+          }}
+        >
+          <View>
+            <Trans>Period</Trans>
+          </View>
+        </View>
       </View>
+
       <RenderMonths>
         <MonthComponent />
       </RenderMonths>

@@ -19,6 +19,8 @@ import type {
   CategoryGroupEntity,
 } from 'loot-core/types/models';
 
+import { getCategoryNameColumnWidth } from './util';
+
 import { NotesButton } from '@desktop-client/components/NotesButton';
 import { InputCell } from '@desktop-client/components/table';
 import { useContextMenu } from '@desktop-client/hooks/useContextMenu';
@@ -207,7 +209,7 @@ export function SidebarGroup({
       innerRef={innerRef}
       style={{
         ...style,
-        width: 200 + 100 * categoryExpandedState,
+        width: getCategoryNameColumnWidth(categoryExpandedState),
         backgroundColor: theme.budgetHeaderCurrentMonth,
         overflow: 'hidden',
         '& .hover-visible': {

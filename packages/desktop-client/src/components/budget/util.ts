@@ -13,12 +13,61 @@ import type {
   CategoryEntity,
   CategoryGroupEntity,
 } from 'loot-core/types/models';
+import type { BillingPeriod } from 'loot-core/types/models/category';
 import type { SyncedPrefs } from 'loot-core/types/prefs';
 
 import { getValidMonthBounds } from './MonthsContext';
 
 import type { DropPosition } from '@desktop-client/components/sort';
 import type { useSpreadsheet } from '@desktop-client/hooks/useSpreadsheet';
+
+export const BASE_CATEGORY_SIDEBAR_WIDTH = 200;
+export const CATEGORY_EXPANDED_WIDTH_INCREMENT = 100;
+export const BILLING_PERIOD_COLUMN_WIDTH = 74;
+
+export function getBillingPeriodBadgeColors(period: BillingPeriod) {
+  const badgeColors: Record<
+    BillingPeriod,
+    { backgroundColor: string; textColor: string }
+  > = {
+    weekly: {
+      backgroundColor: theme.noticeBackgroundLight,
+      textColor: theme.noticeText,
+    },
+    fortnightly: {
+      backgroundColor: theme.warningBackground,
+      textColor: theme.warningText,
+    },
+    monthly: {
+      backgroundColor: theme.tableHeaderBackground,
+      textColor: theme.tableTextSubdued,
+    },
+    quarterly: {
+      backgroundColor: theme.errorBackground,
+      textColor: theme.errorText,
+    },
+    annually: {
+      backgroundColor: theme.sidebarItemAccentSelected,
+      textColor: theme.pageText,
+    },
+  };
+
+  return badgeColors[period];
+}
+
+export function getCategoryNameColumnWidth(categoryExpandedState: number) {
+  return (
+    BASE_CATEGORY_SIDEBAR_WIDTH +
+    CATEGORY_EXPANDED_WIDTH_INCREMENT * categoryExpandedState
+  );
+}
+
+export function getCategorySidebarWidth(categoryExpandedState: number) {
+  return (
+    getCategoryNameColumnWidth(categoryExpandedState) +
+    BILLING_PERIOD_COLUMN_WIDTH
+  );
+}
 
 export function addToBeBudgetedGroup(groups: CategoryGroupEntity[]) {
   return [

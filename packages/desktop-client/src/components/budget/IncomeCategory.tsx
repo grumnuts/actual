@@ -4,6 +4,7 @@ import type { ComponentProps } from 'react';
 
 import type { CategoryEntity } from 'loot-core/types/models';
 
+import { BillingPeriodColumn } from './BillingPeriodColumn';
 import { RenderMonths } from './RenderMonths';
 import { SidebarCategory } from './SidebarCategory';
 
@@ -86,6 +87,11 @@ export function IncomeCategory({
         onEditName={onEditName}
         onSave={onSave}
         onDelete={onDelete}
+      />
+      <BillingPeriodColumn
+        category={cat}
+        hideBottomBorder={isLast}
+        onSave={onSave}
       />
       <RenderMonths>
         {({ month }) => (

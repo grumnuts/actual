@@ -81,6 +81,12 @@ async function saveGlobalPrefs(prefs: GlobalPrefs) {
       '' + prefs.categoryExpandedState,
     );
   }
+  if (prefs.budgetAllocationPeriod !== undefined) {
+    await asyncStorage.setItem(
+      'budget-allocation-period',
+      prefs.budgetAllocationPeriod,
+    );
+  }
   if (prefs.documentDir !== undefined && (await fs.exists(prefs.documentDir))) {
     await asyncStorage.setItem('document-dir', prefs.documentDir);
   }
@@ -133,6 +139,7 @@ async function loadGlobalPrefs(): Promise<GlobalPrefs> {
   const {
     'floating-sidebar': floatingSidebar,
     'category-expanded-state': categoryExpandedState,
+    'budget-allocation-period': budgetAllocationPeriod,
     'max-months': maxMonths,
     'document-dir': documentDir,
     'encrypt-key': encryptKey,
@@ -147,6 +154,7 @@ async function loadGlobalPrefs(): Promise<GlobalPrefs> {
   } = await asyncStorage.multiGet([
     'floating-sidebar',
     'category-expanded-state',
+    'budget-allocation-period',
     'max-months',
     'document-dir',
     'encrypt-key',
@@ -162,6 +170,12 @@ async function loadGlobalPrefs(): Promise<GlobalPrefs> {
   return {
     floatingSidebar: floatingSidebar === 'true',
     categoryExpandedState: stringToInteger(categoryExpandedState || '') || 0,
+    budgetAllocationPeriod:
+      budgetAllocationPeriod === 'weekly' ||
+      budgetAllocationPeriod === 'fortnightly' ||
+      budgetAllocationPeriod === 'monthly'
+        ? budgetAllocationPeriod
+        : 'weekly',
     maxMonths: stringToInteger(maxMonths || '') || 1,
     documentDir: documentDir || getDefaultDocumentDir(),
     keyId: encryptKey && JSON.parse(encryptKey).id,

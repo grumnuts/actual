@@ -43,6 +43,9 @@ export type DbCategory = {
   goal_def?: JsonString | null;
   template_settings?: { source: 'notes' | 'ui' };
   tombstone: 1 | 0;
+  billing_period?: string | null;
+  weekly_allocation_amount?: number | null;
+  weekly_allocation_override?: number | null;
 };
 
 export type DbCategoryGroup = {

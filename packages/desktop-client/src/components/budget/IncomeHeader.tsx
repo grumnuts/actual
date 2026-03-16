@@ -5,6 +5,7 @@ import { Button } from '@actual-app/components/button';
 import { View } from '@actual-app/components/view';
 
 import { RenderMonths } from './RenderMonths';
+import { getCategoryNameColumnWidth } from './util';
 
 import { useBudgetComponents } from '.';
 
@@ -22,7 +23,7 @@ export function IncomeHeader({ onShowNewGroup }: IncomeHeaderProps) {
     <View style={{ flexDirection: 'row', flex: 1 }}>
       <View
         style={{
-          width: 200 + 100 * categoryExpandedState,
+          width: getCategoryNameColumnWidth(categoryExpandedState),
           alignItems: 'flex-start',
           justifyContent: 'flex-start',
         }}

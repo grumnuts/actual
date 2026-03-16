@@ -65,6 +65,9 @@ type CreateCategoryPayload = {
   groupId: CategoryGroupEntity['id'];
   isIncome: boolean;
   isHidden: boolean;
+  billingPeriod?: CategoryEntity['billing_period'];
+  weeklyAllocationAmount?: number;
+  weeklyAllocationOverride?: number;
 };
 
 export function useCreateCategoryMutation() {
@@ -78,12 +81,18 @@ export function useCreateCategoryMutation() {
       groupId,
       isIncome,
       isHidden,
+      billingPeriod,
+      weeklyAllocationAmount,
+      weeklyAllocationOverride,
     }: CreateCategoryPayload) => {
       const id = await send('category-create', {
         name,
         groupId,
         isIncome,
         hidden: isHidden,
+        billing_period: billingPeriod,
+        weekly_allocation_amount: weeklyAllocationAmount,
+        weekly_allocation_override: weeklyAllocationOverride,
       });
       return id;
     },

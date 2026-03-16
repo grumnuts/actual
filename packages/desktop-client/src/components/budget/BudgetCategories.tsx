@@ -14,6 +14,7 @@ import { ExpenseGroup } from './ExpenseGroup';
 import { IncomeCategory } from './IncomeCategory';
 import { IncomeGroup } from './IncomeGroup';
 import { IncomeHeader } from './IncomeHeader';
+import { BillingPeriodColumn } from './BillingPeriodColumn';
 import { SidebarCategory } from './SidebarCategory';
 import { SidebarGroup } from './SidebarGroup';
 import { separateGroups } from './util';
@@ -264,6 +265,7 @@ export const BudgetCategories = memo<BudgetCategoriesProps>(
                     onHideNewGroup={onHideNewGroup}
                     onEdit={onEditName}
                   />
+                  <BillingPeriodColumn />
                 </Row>
               );
               break;
@@ -285,6 +287,7 @@ export const BudgetCategories = memo<BudgetCategoriesProps>(
                     onHideNewCategory={onHideNewCategory}
                     onEditName={onEditName!}
                   />
+                  <BillingPeriodColumn />
                 </Row>
               );
               break;

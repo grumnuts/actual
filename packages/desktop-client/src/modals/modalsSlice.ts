@@ -399,7 +399,12 @@ export type Modal =
       name: 'new-category';
       options: {
         onValidate?: (value: string) => string | null;
-        onSubmit: (value: string) => Promise<void>;
+        onSubmit: (options: {
+          name: string;
+          billingPeriod: CategoryEntity['billing_period'];
+          weeklyAllocationAmount: number;
+          weeklyAllocationOverride: number;
+        }) => Promise<void>;
       };
     }
   | {

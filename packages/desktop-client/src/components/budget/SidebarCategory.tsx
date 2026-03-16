@@ -17,6 +17,7 @@ import type {
 } from 'loot-core/types/models';
 
 import { SidebarCategoryButtons } from './SidebarCategoryButtons';
+import { getCategoryNameColumnWidth } from './util';
 
 import { InputCell } from '@desktop-client/components/table';
 import { useContextMenu } from '@desktop-client/hooks/useContextMenu';
@@ -84,7 +85,9 @@ export function SidebarCategory({
       ref={triggerRef}
       onContextMenu={handleContextMenu}
     >
-      <TextOneLine data-testid="category-name">{category.name}</TextOneLine>
+      <View style={{ flex: 1, overflow: 'hidden' }}>
+        <TextOneLine data-testid="category-name">{category.name}</TextOneLine>
+      </View>
       <View style={{ flexShrink: 0, marginLeft: 5 }}>
         <Button
           variant="bare"
@@ -145,7 +148,7 @@ export function SidebarCategory({
     <View
       innerRef={innerRef}
       style={{
-        width: 200 + 100 * categoryExpandedState,
+        width: getCategoryNameColumnWidth(categoryExpandedState),
         overflow: 'hidden',
         '& .hover-visible': {
           display: 'none',

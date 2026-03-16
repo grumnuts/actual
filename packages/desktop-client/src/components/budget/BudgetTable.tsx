@@ -1,11 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import { Trans } from 'react-i18next';
+
 
 import { styles } from '@actual-app/components/styles';
+import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 
+import { listen, send } from 'loot-core/platform/client/connection';
+import { sheetForMonth } from 'loot-core/shared/months';
 import { q } from 'loot-core/shared/query';
+import { integerToCurrency } from 'loot-core/shared/util';
+import {
+  calculateAllocationForPeriod,
+  type BudgetAllocationPeriod,
+} from 'loot-core/shared/weeklyAllocation';
 import type {
   CategoryEntity,
   CategoryGroupEntity,
@@ -19,6 +29,7 @@ import type { MonthBounds } from './MonthsContext';
 import {
   findSortDown,
   findSortUp,
+  getCategorySidebarWidth,
   getScrollbarWidth,
   separateGroups,
 } from './util';
@@ -246,7 +257,7 @@ export function BudgetTable(props: BudgetTableProps) {
           paddingRight: 5 + getScrollbarWidth(),
         }}
       >
-        <View style={{ width: 200 + 100 * categoryExpandedState }} />
+        <View style={{ width: getCategorySidebarWidth(categoryExpandedState) }} />
         <MonthsProvider
           startMonth={prewarmStartMonth}
           numMonths={numMonths}
@@ -301,8 +312,134 @@ export function BudgetTable(props: BudgetTableProps) {
               />
             </SchedulesProvider>
           </View>
+          {/* Weekly allocation running total */}
+          <WeeklyAllocationSummary
+            categoryGroups={categoryGroups}
+            month={startMonth}
+            type={type}
+          />
         </View>
       </MonthsProvider>
+    </View>
+  );
+}
+
+function WeeklyAllocationSummary({
+  categoryGroups,
+  month,
+  type,
+}: {
+  categoryGroups: CategoryGroupEntity[];
+  month: string;
+  type: string;
+}) {
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+
+  const budgetMonthMethod =
+    type === 'tracking' ? 'tracking-budget-month' : 'envelope-budget-month';
+  const budgetSheetPrefix = `${sheetForMonth(month)}!budget-`;
+
+  const [monthValues, setMonthValues] = useState<
+    Array<{ name: string; value: unknown }>
+  >([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchMonthData() {
+      const data = await send(budgetMonthMethod, { month });
+      if (!cancelled) {
+        setMonthValues(
+          (data as Array<{ name: string; value: unknown }>) ?? [],
+        );
+      }
+    }
+
+    void fetchMonthData();
+
+    const unlisten = listen(
+      'cells-changed',
+      (nodes: Array<{ name: string }>) => {
+        if (nodes.some(n => n.name.startsWith(budgetSheetPrefix))) {
+          void fetchMonthData();
+        }
+      },
+    );
+
+    return () => {
+      cancelled = true;
+      unlisten();
+    };
+  }, [budgetMonthMethod, budgetSheetPrefix, month]);
+
+  const budgetedByCategory = useMemo(() => {
+    const map = new Map<string, number>();
+
+    for (const value of monthValues as Array<{ name: string; value: unknown }>) {
+      const match = value.name.match(/budget-(.+)$/);
+      if (!match || typeof value.value !== 'number') {
+        continue;
+      }
+
+      map.set(match[1], Math.abs(value.value));
+    }
+
+    return map;
+  }, [monthValues]);
+
+  const allocationLabel =
+    allocationPeriod === 'fortnightly'
+      ? 'fortnightly allocation'
+      : allocationPeriod === 'monthly'
+        ? 'monthly allocation'
+        : 'weekly allocation';
+
+  const allocationSuffix =
+    allocationPeriod === 'fortnightly'
+      ? '/fortnight'
+      : allocationPeriod === 'monthly'
+        ? '/month'
+        : '/week';
+
+  const total = useMemo(() => {
+    return categoryGroups
+      .filter(g => !g.is_income)
+      .flatMap(g => g.categories ?? [])
+      .filter(cat => !cat.hidden)
+      .reduce(
+        (sum, cat) =>
+          sum +
+          calculateAllocationForPeriod(
+            budgetedByCategory.get(cat.id) ?? 0,
+            cat.billing_period ?? 'monthly',
+            allocationPeriod,
+          ),
+        0,
+      );
+  }, [allocationPeriod, budgetedByCategory, categoryGroups]);
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        padding: '8px 16px',
+        borderTop: `1px solid ${theme.tableBorder}`,
+        backgroundColor: theme.tableBackground,
+        flexShrink: 0,
+        gap: 8,
+      }}
+    >
+      <Text style={{ fontSize: 13, color: theme.tableTextSubdued }}>
+        <Trans>Total {{allocationLabel}}:</Trans>
+      </Text>
+      <Text style={{ fontSize: 15, fontWeight: 600, color: theme.tableText }}>
+        {integerToCurrency(total)}
+        {allocationSuffix}
+      </Text>
     </View>
   );
 }

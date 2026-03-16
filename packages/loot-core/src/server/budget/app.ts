@@ -277,11 +277,17 @@ async function createCategory({
   groupId,
   isIncome,
   hidden,
+  billing_period,
+  weekly_allocation_amount,
+  weekly_allocation_override,
 }: {
   name: string;
   groupId: CategoryGroupEntity['id'];
   isIncome?: boolean;
   hidden?: boolean;
+  billing_period?: string;
+  weekly_allocation_amount?: number;
+  weekly_allocation_override?: number;
 }): Promise<CategoryEntity['id']> {
   if (!groupId) {
     throw APIError('Creating a category: groupId is required');
@@ -292,6 +298,9 @@ async function createCategory({
     cat_group: groupId,
     is_income: isIncome ? 1 : 0,
     hidden: hidden ? 1 : 0,
+    billing_period: billing_period ?? 'monthly',
+    weekly_allocation_amount: weekly_allocation_amount ?? 0,
+    weekly_allocation_override: weekly_allocation_override ?? 0,
   });
 }
 

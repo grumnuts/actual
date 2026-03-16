@@ -184,13 +184,21 @@ export function BudgetPage() {
             name: 'new-category',
             options: {
               onValidate: name => (!name ? 'Name is required.' : null),
-              onSubmit: async name => {
+              onSubmit: async ({
+                name,
+                billingPeriod,
+                weeklyAllocationAmount,
+                weeklyAllocationOverride,
+              }) => {
                 createCategory.mutate(
                   {
                     name,
                     groupId,
                     isIncome,
                     isHidden: false,
+                    billingPeriod,
+                    weeklyAllocationAmount,
+                    weeklyAllocationOverride,
                   },
                   {
                     onSettled: () => {

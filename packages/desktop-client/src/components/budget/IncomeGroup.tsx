@@ -5,6 +5,7 @@ import { theme } from '@actual-app/components/theme';
 
 import type { CategoryGroupEntity } from 'loot-core/types/models';
 
+import { BillingPeriodColumn } from './BillingPeriodColumn';
 import { RenderMonths } from './RenderMonths';
 import { SidebarGroup } from './SidebarGroup';
 
@@ -53,6 +54,7 @@ export function IncomeGroup({
         onToggleCollapse={onToggleCollapse}
         onShowNewCategory={onShowNewCategory}
       />
+      <BillingPeriodColumn />
       <RenderMonths>
         {({ month }) => <MonthComponent month={month} group={group} />}
       </RenderMonths>
