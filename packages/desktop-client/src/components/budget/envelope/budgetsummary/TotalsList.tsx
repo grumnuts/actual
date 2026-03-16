@@ -8,10 +8,16 @@ import { styles } from '@actual-app/components/styles';
 import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 
+import {
+  calculateMonthlyAmountForPeriod,
+  type BudgetAllocationPeriod,
+} from 'loot-core/shared/weeklyAllocation';
+
 import { EnvelopeCellValue } from '@desktop-client/components/budget/envelope/EnvelopeBudgetComponents';
 import { CellValueText } from '@desktop-client/components/spreadsheet/CellValue';
 import { useFormat } from '@desktop-client/hooks/useFormat';
 import type { FormatType } from '@desktop-client/hooks/useFormat';
+import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { envelopeBudget } from '@desktop-client/spreadsheet/bindings';
 
 /**
@@ -47,6 +53,13 @@ type TotalsListProps = {
 };
 
 export function TotalsList({ prevMonthName, style }: TotalsListProps) {
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+
+  const convert = (value: number) =>
+    calculateMonthlyAmountForPeriod(value, allocationPeriod);
+
   const format = useFormat();
   const signedFormatter = makeSignedFormatter(format);
   const invertedSignedFormatter = makeSignedFormatter(format, true);
@@ -77,7 +90,11 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
                   <EnvelopeCellValue
                     binding={envelopeBudget.totalIncome}
                     type="financial"
-                  />
+                  >
+                    {props => (
+                      <CellValueText {...props} value={convert(props.value)} />
+                    )}
+                  </EnvelopeCellValue>
                 }
               />
               <AlignedText
@@ -86,7 +103,11 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
                   <EnvelopeCellValue
                     binding={envelopeBudget.fromLastMonth}
                     type="financial"
-                  />
+                  >
+                    {props => (
+                      <CellValueText {...props} value={convert(props.value)} />
+                    )}
+                  </EnvelopeCellValue>
                 }
               />
             </>
@@ -97,7 +118,13 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
             binding={envelopeBudget.incomeAvailable}
             type="financial"
           >
-            {props => <CellValueText {...props} style={{ fontWeight: 600 }} />}
+            {props => (
+              <CellValueText
+                {...props}
+                value={convert(props.value)}
+                style={{ fontWeight: 600 }}
+              />
+            )}
           </EnvelopeCellValue>
         </Tooltip>
 
@@ -108,6 +135,7 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
           {props => (
             <CellValueText
               {...props}
+              value={convert(props.value)}
               style={{ fontWeight: 600 }}
               formatter={signedFormatter}
             />
@@ -121,6 +149,7 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
           {props => (
             <CellValueText
               {...props}
+              value={convert(props.value)}
               style={{ fontWeight: 600 }}
               formatter={signedFormatter}
             />
@@ -134,6 +163,7 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
           {props => (
             <CellValueText
               {...props}
+              value={convert(props.value)}
               style={{ fontWeight: 600 }}
               formatter={invertedSignedFormatter}
             />

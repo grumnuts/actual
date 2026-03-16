@@ -1,7 +1,6 @@
 // @ts-strict-ignore
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import type { CSSProperties } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -19,7 +18,6 @@ import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 import type { MonthBounds } from './MonthsContext';
 
 import { Link } from '@desktop-client/components/common/Link';
-import { useDateFormat } from '@desktop-client/hooks/useDateFormat';
 import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { useLocale } from '@desktop-client/hooks/useLocale';
 
@@ -39,60 +37,12 @@ export const MonthPicker = ({
   onSelect,
 }: MonthPickerProps) => {
   const locale = useLocale();
-  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
-  const dayMonthFormat = monthUtils.getDayMonthFormat(dateFormat);
   const { t } = useTranslation();
   const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
   const allocationPeriod =
     (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
 
   const currentMonth = monthUtils.currentMonth();
-  const periodLength = allocationPeriod === 'weekly' ? 7 : 14;
-
-  function getPeriodStartFromDate(date: string) {
-    if (allocationPeriod === 'weekly') {
-      return monthUtils.weekFromDate(date, '1');
-    }
-
-    if (allocationPeriod === 'fortnightly') {
-      const isoWeekStart = monthUtils.weekFromDate(date, '1');
-      const isoWeekNumber = parseInt(monthUtils.format(isoWeekStart, 'I'));
-
-      return isoWeekNumber % 2 === 0
-        ? monthUtils.subWeeks(isoWeekStart, 1)
-        : isoWeekStart;
-    }
-
-    const yearStart = `${monthUtils.getYear(date)}-01-01`;
-    const dayOfYear = monthUtils.differenceInCalendarDays(date, yearStart) + 1;
-    const periodNumber = Math.floor((dayOfYear - 1) / periodLength) + 1;
-
-    return monthUtils.addDays(yearStart, (periodNumber - 1) * periodLength);
-  }
-
-  const [selectedPeriodStart, setSelectedPeriodStart] = useState<string>(() => {
-    const anchorDate =
-      startMonth === currentMonth
-        ? monthUtils.currentDay()
-        : monthUtils.firstDayOfMonth(startMonth);
-
-    return getPeriodStartFromDate(anchorDate);
-  });
-
-  useEffect(() => {
-    if (allocationPeriod === 'monthly') {
-      return;
-    }
-
-    const selectedMonth = monthUtils.monthFromDate(selectedPeriodStart);
-    if (selectedMonth !== startMonth) {
-      const anchorDate =
-        startMonth === currentMonth
-          ? monthUtils.currentDay()
-          : monthUtils.firstDayOfMonth(startMonth);
-      setSelectedPeriodStart(getPeriodStartFromDate(anchorDate));
-    }
-  }, [allocationPeriod, currentMonth, startMonth]);
 
   function getPeriodForMonth(month: string) {
     const monthStart = monthUtils.firstDayOfMonth(month);
@@ -100,8 +50,7 @@ export const MonthPicker = ({
     if (allocationPeriod === 'monthly') {
       return {
         title: monthUtils.format(month, 'MMMM', locale),
-        year: monthUtils.format(month, 'yyyy', locale),
-        range: `${monthUtils.format(monthStart, dayMonthFormat, locale)} - ${monthUtils.format(monthUtils.lastDayOfMonth(month), dayMonthFormat, locale)}`,
+        range: `${monthUtils.format(monthStart, 'MMM d', locale)} - ${monthUtils.format(monthUtils.lastDayOfMonth(month), 'MMM d', locale)}`,
       };
     }
 
@@ -121,116 +70,26 @@ export const MonthPicker = ({
         allocationPeriod === 'weekly'
           ? t('Week {{number}}', { number: periodNumber })
           : t('Fortnight {{number}}', { number: periodNumber }),
-      year: monthUtils.format(periodStart, 'R', locale),
-      range: `${monthUtils.format(periodStart, dayMonthFormat, locale)} - ${monthUtils.format(periodEnd, dayMonthFormat, locale)}`,
+      range: `${monthUtils.format(periodStart, 'MMM d', locale)} - ${monthUtils.format(periodEnd, 'MMM d', locale)}`,
     };
   }
 
-  const monthTargets = [
+  const visiblePeriods = [
     monthUtils.prevMonth(startMonth),
     startMonth,
     monthUtils.nextMonth(startMonth),
-  ];
+  ].map(month => {
+    const period = getPeriodForMonth(month);
 
-  const currentPeriodStart = getPeriodStartFromDate(monthUtils.currentDay());
-
-  const visiblePeriods =
-    allocationPeriod === 'monthly'
-      ? monthTargets.map(month => {
-          const period = getPeriodForMonth(month);
-
-          return {
-            month,
-            title: period.title,
-            year: period.year,
-            range: period.range,
-            isBudgeted: month >= monthBounds.start && month <= monthBounds.end,
-            isSelected: month === startMonth,
-            isCurrent: month === currentMonth,
-          };
-        })
-      : (() => {
-          return monthTargets.map((_, index) => {
-            const offset = index - 1;
-            const periodStart = monthUtils.addDays(
-              selectedPeriodStart,
-              offset * periodLength,
-            );
-            const periodEnd = monthUtils.addDays(periodStart, periodLength - 1);
-            const periodNumber =
-              allocationPeriod === 'weekly'
-                ? parseInt(monthUtils.format(periodStart, 'I'))
-                : allocationPeriod === 'fortnightly'
-                  ? Math.ceil(parseInt(monthUtils.format(periodStart, 'I')) / 2)
-                : (() => {
-                    const periodYearStart = `${monthUtils.getYear(periodStart)}-01-01`;
-                    const periodDayOfYear =
-                      monthUtils.differenceInCalendarDays(
-                        periodStart,
-                        periodYearStart,
-                      ) + 1;
-
-                    return Math.floor((periodDayOfYear - 1) / periodLength) + 1;
-                  })();
-
-            return {
-              month: monthUtils.monthFromDate(periodStart),
-              title:
-                allocationPeriod === 'weekly'
-                  ? t('Week {{number}}', { number: periodNumber })
-                  : t('Fortnight {{number}}', { number: periodNumber }),
-              year: monthUtils.format(periodStart, 'R', locale),
-              range: `${monthUtils.format(periodStart, dayMonthFormat, locale)} - ${monthUtils.format(periodEnd, dayMonthFormat, locale)}`,
-              isBudgeted:
-                monthUtils.monthFromDate(periodStart) >= monthBounds.start &&
-                monthUtils.monthFromDate(periodStart) <= monthBounds.end,
-              isSelected: index === 1,
-              isCurrent: periodStart === currentPeriodStart,
-              periodStart,
-            };
-          });
-        })();
-
-  function navigatePeriod(offset: number) {
-    const nextPeriodStart = monthUtils.addDays(
-      selectedPeriodStart,
-      offset * periodLength,
-    );
-    setSelectedPeriodStart(nextPeriodStart);
-    onSelect(monthUtils.monthFromDate(nextPeriodStart));
-  }
-
-  useHotkeys(
-    'left',
-    () => {
-      if (allocationPeriod === 'monthly') {
-        return;
-      }
-
-      navigatePeriod(-1);
-    },
-    {
-      preventDefault: true,
-      scopes: ['app'],
-    },
-    [allocationPeriod, selectedPeriodStart, periodLength],
-  );
-
-  useHotkeys(
-    'right',
-    () => {
-      if (allocationPeriod === 'monthly') {
-        return;
-      }
-
-      navigatePeriod(1);
-    },
-    {
-      preventDefault: true,
-      scopes: ['app'],
-    },
-    [allocationPeriod, selectedPeriodStart, periodLength],
-  );
+    return {
+      month,
+      title: period.title,
+      range: period.range,
+      isBudgeted: month >= monthBounds.start && month <= monthBounds.end,
+      isSelected: month === startMonth,
+      isCurrent: month === currentMonth,
+    };
+  });
 
   return (
     <View
@@ -261,15 +120,7 @@ export const MonthPicker = ({
           <Link
             variant="button"
             buttonVariant="bare"
-            onPress={() => {
-              if (allocationPeriod === 'monthly') {
-                onSelect(currentMonth);
-                return;
-              }
-
-              setSelectedPeriodStart(currentPeriodStart);
-              onSelect(monthUtils.monthFromDate(currentPeriodStart));
-            }}
+            onPress={() => onSelect(currentMonth)}
             style={{ padding: '3px 3px' }}
           >
             <View title={t('Today')}>
@@ -284,14 +135,7 @@ export const MonthPicker = ({
           <Link
             variant="button"
             buttonVariant="bare"
-            onPress={() => {
-              if (allocationPeriod === 'monthly') {
-                onSelect(monthUtils.prevMonth(startMonth));
-                return;
-              }
-
-              navigatePeriod(-1);
-            }}
+            onPress={() => onSelect(monthUtils.prevMonth(startMonth))}
             style={{ padding: '3px 3px' }}
           >
             <View title={t('Previous month')}>
@@ -317,26 +161,18 @@ export const MonthPicker = ({
         >
           {visiblePeriods.map(period => (
             <View
-              key={period.periodStart ?? period.month}
-              onClick={() => {
-                if (allocationPeriod === 'monthly') {
-                  onSelect(period.month);
-                  return;
-                }
-
-                setSelectedPeriodStart(period.periodStart);
-                onSelect(period.month);
-              }}
+              key={period.month}
+              onClick={() => onSelect(period.month)}
               style={{
                 alignItems: 'center',
                 justifyContent: 'center',
                 flex: 1,
                 minWidth: 0,
-                maxWidth: 220,
+                maxWidth: 180,
                 textAlign: 'center',
                 userSelect: 'none',
                 borderRadius: 4,
-                padding: '4px 10px',
+                padding: '2px 10px',
                 cursor: 'pointer',
                 ...styles.smallText,
                 ...(period.isBudgeted
@@ -372,20 +208,10 @@ export const MonthPicker = ({
               <View
                 style={{
                   fontSize: 11,
-                  lineHeight: 1.2,
                   whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                   maxWidth: '100%',
-                }}
-              >
-                {period.year}
-              </View>
-              <View
-                style={{
-                  fontSize: 10,
-                  lineHeight: 1.2,
-                  whiteSpace: 'nowrap',
-                  maxWidth: '100%',
-                  textAlign: 'center',
                 }}
               >
                 {period.range}
@@ -406,14 +232,7 @@ export const MonthPicker = ({
           <Link
             variant="button"
             buttonVariant="bare"
-            onPress={() => {
-              if (allocationPeriod === 'monthly') {
-                onSelect(monthUtils.nextMonth(startMonth));
-                return;
-              }
-
-              navigatePeriod(1);
-            }}
+            onPress={() => onSelect(monthUtils.nextMonth(startMonth))}
             style={{ padding: '3px 3px' }}
           >
             <View title={t('Next month')}>

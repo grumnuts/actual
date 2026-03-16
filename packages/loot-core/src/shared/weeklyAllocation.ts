@@ -40,38 +40,6 @@ function annualToAllocationPeriod(
   }
 }
 
-function allocationPeriodToAnnual(
-  amount: number,
-  period: BudgetAllocationPeriod,
-): number {
-  switch (period) {
-    case 'weekly':
-      return amount * WEEKS_PER_YEAR;
-    case 'fortnightly':
-      return amount * FORTNIGHTS_PER_YEAR;
-    case 'monthly':
-    default:
-      return amount * MONTHS_PER_YEAR;
-  }
-}
-
-function annualToBillingPeriod(annualAmount: number, period: BillingPeriod): number {
-  switch (period) {
-    case 'weekly':
-      return Math.round(annualAmount / WEEKS_PER_YEAR);
-    case 'fortnightly':
-      return Math.round(annualAmount / FORTNIGHTS_PER_YEAR);
-    case 'monthly':
-      return Math.round(annualAmount / MONTHS_PER_YEAR);
-    case 'quarterly':
-      return Math.round(annualAmount / 4);
-    case 'annually':
-      return Math.round(annualAmount);
-    default:
-      return 0;
-  }
-}
-
 export function calculateAllocationForPeriod(
   amount: number,
   billingPeriod: BillingPeriod,
@@ -90,13 +58,6 @@ export function calculateMonthlyAmountForPeriod(
   return calculateAllocationForPeriod(monthlyAmount, 'monthly', allocationPeriod);
 }
 
-export function calculateMonthlyAmountFromPeriod(
-  periodAmount: number,
-  allocationPeriod: BudgetAllocationPeriod,
-): number {
-  return calculateAllocationForPeriod(periodAmount, allocationPeriod, 'monthly');
-}
-
 export function getAllocationPeriodSuffix(
   allocationPeriod: BudgetAllocationPeriod,
 ): '/week' | '/fortnight' | '/month' {
@@ -109,27 +70,6 @@ export function getAllocationPeriodSuffix(
     default:
       return '/week';
   }
-}
-
-export function getCategoryAllocationPeriod(
-  billingPeriod?: BillingPeriod | null,
-): BudgetAllocationPeriod {
-  if (billingPeriod === 'weekly' || billingPeriod === 'fortnightly') {
-    return billingPeriod;
-  }
-
-  return 'monthly';
-}
-
-export function calculateBillingAmountFromAllocation(
-  amount: number,
-  billingPeriod: BillingPeriod,
-  allocationPeriod: BudgetAllocationPeriod,
-): number {
-  return annualToBillingPeriod(
-    allocationPeriodToAnnual(amount, allocationPeriod),
-    billingPeriod,
-  );
 }
 
 /**

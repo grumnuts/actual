@@ -9,6 +9,11 @@ import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
 
+import {
+  calculateMonthlyAmountForPeriod,
+  type BudgetAllocationPeriod,
+} from 'loot-core/shared/weeklyAllocation';
+
 import { TotalsList } from './TotalsList';
 
 import {
@@ -18,6 +23,7 @@ import {
 import { FinancialText } from '@desktop-client/components/FinancialText';
 import { PrivacyFilter } from '@desktop-client/components/PrivacyFilter';
 import { useFormat } from '@desktop-client/hooks/useFormat';
+import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { envelopeBudget } from '@desktop-client/spreadsheet/bindings';
 
 type ToBudgetAmountProps = {
@@ -44,13 +50,19 @@ export function ToBudgetAmount({
     value: 0,
   });
   const format = useFormat();
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
   const availableValue = sheetValue;
   if (typeof availableValue !== 'number' && availableValue !== null) {
     throw new Error(
       'Expected availableValue to be a number but got ' + availableValue,
     );
   }
-  const num = availableValue ?? 0;
+  const num = calculateMonthlyAmountForPeriod(
+    availableValue ?? 0,
+    allocationPeriod,
+  );
   const isNegative = num < 0;
   const isPositive = num > 0;
 
