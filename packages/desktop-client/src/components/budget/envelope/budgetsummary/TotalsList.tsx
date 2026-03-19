@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { Trans } from 'react-i18next';
 
@@ -7,14 +7,15 @@ import { Block } from '@actual-app/components/block';
 import { styles } from '@actual-app/components/styles';
 import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
+import { useConvertedCategoryTotal } from 'packages/desktop-client/src/components/budget/useConvertedCategoryTotal';
 
-import {
-  calculateMonthlyAmountForPeriod,
-  type BudgetAllocationPeriod,
-} from 'loot-core/shared/weeklyAllocation';
+import { calculateMonthlyAmountForPeriod } from 'loot-core/shared/weeklyAllocation';
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 
+import { useAllocationPeriodSpending } from '@desktop-client/components/budget/AllocationPeriodSpendingContext';
 import { EnvelopeCellValue } from '@desktop-client/components/budget/envelope/EnvelopeBudgetComponents';
 import { CellValueText } from '@desktop-client/components/spreadsheet/CellValue';
+import { useCategories } from '@desktop-client/hooks/useCategories';
 import { useFormat } from '@desktop-client/hooks/useFormat';
 import type { FormatType } from '@desktop-client/hooks/useFormat';
 import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
@@ -56,9 +57,37 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
   const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
   const allocationPeriod =
     (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const { periodIncome } = useAllocationPeriodSpending();
+
+  const periodLabel =
+    allocationPeriod === 'fortnightly'
+      ? 'fortnight'
+      : allocationPeriod === 'monthly'
+        ? 'month'
+        : 'week';
+  const previousPeriodLabel =
+    allocationPeriod === 'monthly' ? prevMonthName : `previous ${periodLabel}`;
 
   const convert = (value: number) =>
     calculateMonthlyAmountForPeriod(value, allocationPeriod);
+
+  const { data: { grouped: categoryGroups } = { grouped: [] } } =
+    useCategories();
+  const expenseCategories = useMemo(
+    () =>
+      categoryGroups.filter(g => !g.is_income).flatMap(g => g.categories ?? []),
+    [categoryGroups],
+  );
+  const budgetBindingFactory = useCallback(
+    (id: string) => envelopeBudget.catBudgeted(id),
+    [],
+  );
+  const convertedBudgetTotal = useConvertedCategoryTotal({
+    categories: expenseCategories,
+    allocationPeriod,
+    bindingFactory: budgetBindingFactory,
+    sheetBinding: envelopeBudget.catBudgeted(''),
+  });
 
   const format = useFormat();
   const signedFormatter = makeSignedFormatter(format);
@@ -114,18 +143,24 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
           }
           placement="bottom end"
         >
-          <EnvelopeCellValue
-            binding={envelopeBudget.incomeAvailable}
-            type="financial"
-          >
-            {props => (
-              <CellValueText
-                {...props}
-                value={convert(props.value)}
-                style={{ fontWeight: 600 }}
-              />
-            )}
-          </EnvelopeCellValue>
+          {allocationPeriod !== 'monthly' ? (
+            <Block style={{ fontWeight: 600 }}>
+              {format(periodIncome, 'financial')}
+            </Block>
+          ) : (
+            <EnvelopeCellValue
+              binding={envelopeBudget.incomeAvailable}
+              type="financial"
+            >
+              {props => (
+                <CellValueText
+                  {...props}
+                  value={convert(props.value)}
+                  style={{ fontWeight: 600 }}
+                />
+              )}
+            </EnvelopeCellValue>
+          )}
         </Tooltip>
 
         <EnvelopeCellValue
@@ -142,19 +177,9 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
           )}
         </EnvelopeCellValue>
 
-        <EnvelopeCellValue
-          binding={envelopeBudget.totalBudgeted}
-          type="financial"
-        >
-          {props => (
-            <CellValueText
-              {...props}
-              value={convert(props.value)}
-              style={{ fontWeight: 600 }}
-              formatter={signedFormatter}
-            />
-          )}
-        </EnvelopeCellValue>
+        <Block style={{ fontWeight: 600 }}>
+          {signedFormatter(-convertedBudgetTotal, 'financial')}
+        </Block>
 
         <EnvelopeCellValue
           binding={envelopeBudget.forNextMonth}
@@ -177,15 +202,15 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
         </Block>
 
         <Block>
-          <Trans>Overspent in {{ prevMonthName }}</Trans>
+          <Trans>Overspent in {{ prevMonthName: previousPeriodLabel }}</Trans>
         </Block>
 
         <Block>
-          <Trans>Budgeted</Trans>
+          <Trans>Budgeted ({{ periodLabel }})</Trans>
         </Block>
 
         <Block>
-          <Trans>For next month</Trans>
+          <Trans>For next {{ periodLabel }}</Trans>
         </Block>
       </View>
     </View>

@@ -483,3 +483,38 @@ export const getShortYearRegex = memoizeOne((format: string) => {
     .replace(/y+/g, '\\d{2}');
   return new RegExp('^' + regex + '$');
 });
+
+/**
+ * Get the ISO week number (1-53) for a given date.
+ * Week 1 is the first week with a Thursday in January (ISO 8601).
+ * Week starts on Monday (weekStartsOn: 1).
+ */
+export function getISOWeekNumber(date: DateLike): number {
+  return d.getISOWeek(_parse(date));
+}
+
+/**
+ * Get the Monday of the ISO week containing the given date.
+ * Returns format yyyy-MM-dd
+ */
+export function getISOWeekStart(date: DateLike): string {
+  return d.format(d.startOfISOWeek(_parse(date)), 'yyyy-MM-dd');
+}
+
+/**
+ * Get the Sunday of the ISO week containing the given date.
+ * Returns format yyyy-MM-dd
+ */
+export function getISOWeekEnd(date: DateLike): string {
+  return d.format(d.endOfISOWeek(_parse(date)), 'yyyy-MM-dd');
+}
+
+/**
+ * Get the ISO week year for a given date.
+ * (In most cases this equals the calendar year, but early January dates
+ * may belong to the previous year's final week, and late December dates
+ * may belong to the next year's week 1.)
+ */
+export function getISOWeekYear(date: DateLike): number {
+  return d.getISOWeekYear(_parse(date));
+}

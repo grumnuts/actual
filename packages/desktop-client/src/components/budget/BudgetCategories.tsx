@@ -9,12 +9,12 @@ import type {
   CategoryGroupEntity,
 } from 'loot-core/types/models';
 
+import { BillingPeriodColumn } from './BillingPeriodColumn';
 import { ExpenseCategory } from './ExpenseCategory';
 import { ExpenseGroup } from './ExpenseGroup';
 import { IncomeCategory } from './IncomeCategory';
 import { IncomeGroup } from './IncomeGroup';
 import { IncomeHeader } from './IncomeHeader';
-import { BillingPeriodColumn } from './BillingPeriodColumn';
 import { SidebarCategory } from './SidebarCategory';
 import { SidebarGroup } from './SidebarGroup';
 import { separateGroups } from './util';

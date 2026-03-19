@@ -12,7 +12,10 @@ import { View } from '@actual-app/components/view';
 import type { CategoryEntity } from 'loot-core/types/models';
 import type { BillingPeriod } from 'loot-core/types/models/category';
 
-import { BILLING_PERIOD_COLUMN_WIDTH, getBillingPeriodBadgeColors } from './util';
+import {
+  BILLING_PERIOD_COLUMN_WIDTH,
+  getBillingPeriodBadgeColors,
+} from './util';
 
 type BillingPeriodColumnProps = {
   category?: CategoryEntity;

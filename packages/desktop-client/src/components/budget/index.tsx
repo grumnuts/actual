@@ -122,7 +122,7 @@ export function Budget() {
 
   const onApplyBudgetTemplatesInGroup = async categories => {
     applyBudgetAction.mutate({
-      month: startMonth,
+      month: startMonth.slice(0, 7),
       type: 'apply-multiple-templates',
       args: {
         categories,
@@ -234,7 +234,7 @@ export function Budget() {
   }
 
   return (
-    <SheetNameProvider name={monthUtils.sheetForMonth(startMonth)}>
+    <SheetNameProvider name={monthUtils.sheetForMonth(startMonth.slice(0, 7))}>
       {/*
         In a previous iteration, the wrapper needs `overflow: hidden` for
         some reason. Without it at certain dimensions the width/height

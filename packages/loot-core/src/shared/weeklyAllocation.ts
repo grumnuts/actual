@@ -55,7 +55,11 @@ export function calculateMonthlyAmountForPeriod(
   monthlyAmount: number,
   allocationPeriod: BudgetAllocationPeriod,
 ): number {
-  return calculateAllocationForPeriod(monthlyAmount, 'monthly', allocationPeriod);
+  return calculateAllocationForPeriod(
+    monthlyAmount,
+    'monthly',
+    allocationPeriod,
+  );
 }
 
 export function getAllocationPeriodSuffix(

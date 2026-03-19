@@ -107,10 +107,7 @@ export function ExpenseCategory({
           onSave={onSave}
           onDelete={onDelete}
         />
-        <BillingPeriodColumn
-          category={cat}
-          onSave={onSave}
-        />
+        <BillingPeriodColumn category={cat} onSave={onSave} />
 
         <RenderMonths>
           {({ month }) => (

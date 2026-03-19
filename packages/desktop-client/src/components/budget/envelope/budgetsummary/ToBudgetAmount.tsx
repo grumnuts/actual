@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { CSSProperties, MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,20 +8,21 @@ import { theme } from '@actual-app/components/theme';
 import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
+import { useConvertedCategoryTotal } from 'packages/desktop-client/src/components/budget/useConvertedCategoryTotal';
 
-import {
-  calculateMonthlyAmountForPeriod,
-  type BudgetAllocationPeriod,
-} from 'loot-core/shared/weeklyAllocation';
+import { calculateMonthlyAmountForPeriod } from 'loot-core/shared/weeklyAllocation';
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 
 import { TotalsList } from './TotalsList';
 
+import { useAllocationPeriodSpending } from '@desktop-client/components/budget/AllocationPeriodSpendingContext';
 import {
   useEnvelopeSheetName,
   useEnvelopeSheetValue,
 } from '@desktop-client/components/budget/envelope/EnvelopeBudgetComponents';
 import { FinancialText } from '@desktop-client/components/FinancialText';
 import { PrivacyFilter } from '@desktop-client/components/PrivacyFilter';
+import { useCategories } from '@desktop-client/hooks/useCategories';
 import { useFormat } from '@desktop-client/hooks/useFormat';
 import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { envelopeBudget } from '@desktop-client/spreadsheet/bindings';
@@ -49,6 +50,10 @@ export function ToBudgetAmount({
     name: envelopeBudget.toBudget,
     value: 0,
   });
+  const totalBudgetedSheetValue = useEnvelopeSheetValue({
+    name: envelopeBudget.totalBudgeted,
+    value: 0,
+  });
   const format = useFormat();
   const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
   const allocationPeriod =
@@ -59,10 +64,37 @@ export function ToBudgetAmount({
       'Expected availableValue to be a number but got ' + availableValue,
     );
   }
-  const num = calculateMonthlyAmountForPeriod(
-    availableValue ?? 0,
-    allocationPeriod,
+
+  const { data: { grouped: categoryGroups } = { grouped: [] } } =
+    useCategories();
+  const expenseCategories = useMemo(
+    () =>
+      categoryGroups.filter(g => !g.is_income).flatMap(g => g.categories ?? []),
+    [categoryGroups],
   );
+  const budgetBindingFactory = useCallback(
+    (id: string) => envelopeBudget.catBudgeted(id),
+    [],
+  );
+  const convertedBudgetTotal = useConvertedCategoryTotal({
+    categories: expenseCategories,
+    allocationPeriod,
+    bindingFactory: budgetBindingFactory,
+    sheetBinding: envelopeBudget.catBudgeted(''),
+  });
+
+  const { periodIncome } = useAllocationPeriodSpending();
+
+  // For weekly/fortnightly: compare actual period income to period-aware budgeted total.
+  // For monthly: use the spreadsheet's to-budget adjusted for per-category billing periods.
+  const rawTotalBudgeted =
+    typeof totalBudgetedSheetValue === 'number' ? totalBudgetedSheetValue : 0;
+  const num =
+    allocationPeriod === 'monthly'
+      ? calculateMonthlyAmountForPeriod(availableValue ?? 0, allocationPeriod) -
+        calculateMonthlyAmountForPeriod(rawTotalBudgeted, allocationPeriod) -
+        convertedBudgetTotal
+      : periodIncome - convertedBudgetTotal;
   const isNegative = num < 0;
   const isPositive = num > 0;
 

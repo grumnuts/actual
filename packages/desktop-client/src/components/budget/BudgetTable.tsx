@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Trans } from 'react-i18next';
 
-
 import { styles } from '@actual-app/components/styles';
 import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
@@ -11,16 +10,14 @@ import { View } from '@actual-app/components/view';
 import { listen, send } from 'loot-core/platform/client/connection';
 import { sheetForMonth } from 'loot-core/shared/months';
 import { q } from 'loot-core/shared/query';
-import { integerToCurrency } from 'loot-core/shared/util';
-import {
-  calculateAllocationForPeriod,
-  type BudgetAllocationPeriod,
-} from 'loot-core/shared/weeklyAllocation';
+import { calculateAllocationForPeriod } from 'loot-core/shared/weeklyAllocation';
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 import type {
   CategoryEntity,
   CategoryGroupEntity,
 } from 'loot-core/types/models';
 
+import { AllocationPeriodSpendingProvider } from './AllocationPeriodSpendingContext';
 import { BudgetCategories } from './BudgetCategories';
 import { BudgetSummaries } from './BudgetSummaries';
 import { BudgetTotals } from './BudgetTotals';
@@ -37,6 +34,7 @@ import {
 import type { DropPosition } from '@desktop-client/components/sort';
 import { SchedulesProvider } from '@desktop-client/hooks/useCachedSchedules';
 import { useCategories } from '@desktop-client/hooks/useCategories';
+import { useFormat } from '@desktop-client/hooks/useFormat';
 import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { useLocalPref } from '@desktop-client/hooks/useLocalPref';
 
@@ -231,96 +229,103 @@ export function BudgetTable(props: BudgetTableProps) {
   const schedulesQuery = useMemo(() => q('schedules').select('*'), []);
 
   return (
-    <View
-      data-testid="budget-table"
-      style={{
-        flex: 1,
-        ...(styles.lightScrollbar && {
-          '& ::-webkit-scrollbar': {
-            backgroundColor: 'transparent',
-          },
-          '& ::-webkit-scrollbar-thumb:vertical': {
-            backgroundColor: theme.pageTextSubdued,
-            // changed from tableHeaderBackground. pageTextSubdued is always visible on pageBackground
-          },
-        }),
-      }}
+    <AllocationPeriodSpendingProvider
+      categoryGroups={categoryGroups}
+      startMonth={startMonth}
     >
       <View
+        data-testid="budget-table"
         style={{
-          flexDirection: 'row',
-          overflow: 'hidden',
-          flexShrink: 0,
-          // This is necessary to align with the table because the
-          // table has this padding to allow the shadow to show
-          paddingLeft: 5,
-          paddingRight: 5 + getScrollbarWidth(),
+          flex: 1,
+          ...(styles.lightScrollbar && {
+            '& ::-webkit-scrollbar': {
+              backgroundColor: 'transparent',
+            },
+            '& ::-webkit-scrollbar-thumb:vertical': {
+              backgroundColor: theme.pageTextSubdued,
+              // changed from tableHeaderBackground. pageTextSubdued is always visible on pageBackground
+            },
+          }),
         }}
       >
-        <View style={{ width: getCategorySidebarWidth(categoryExpandedState) }} />
+        <View
+          style={{
+            flexDirection: 'row',
+            overflow: 'hidden',
+            flexShrink: 0,
+            // This is necessary to align with the table because the
+            // table has this padding to allow the shadow to show
+            paddingLeft: 5,
+            paddingRight: 5 + getScrollbarWidth(),
+          }}
+        >
+          <View
+            style={{ width: getCategorySidebarWidth(categoryExpandedState) }}
+          />
+          <MonthsProvider
+            startMonth={prewarmStartMonth}
+            numMonths={numMonths}
+            monthBounds={monthBounds}
+            type={type}
+          >
+            <BudgetSummaries />
+          </MonthsProvider>
+        </View>
+
         <MonthsProvider
-          startMonth={prewarmStartMonth}
+          startMonth={startMonth}
           numMonths={numMonths}
           monthBounds={monthBounds}
           type={type}
         >
-          <BudgetSummaries />
-        </MonthsProvider>
-      </View>
-
-      <MonthsProvider
-        startMonth={startMonth}
-        numMonths={numMonths}
-        monthBounds={monthBounds}
-        type={type}
-      >
-        <BudgetTotals
-          toggleHiddenCategories={toggleHiddenCategories}
-          expandAllCategories={expandAllCategories}
-          collapseAllCategories={collapseAllCategories}
-        />
-        <View
-          style={{
-            overflowY: 'scroll',
-            overflowAnchor: 'none',
-            flex: 1,
-            paddingLeft: 5,
-            paddingRight: 5,
-          }}
-        >
+          <BudgetTotals
+            toggleHiddenCategories={toggleHiddenCategories}
+            expandAllCategories={expandAllCategories}
+            collapseAllCategories={collapseAllCategories}
+          />
           <View
             style={{
-              flexShrink: 0,
+              overflowY: 'scroll',
+              overflowAnchor: 'none',
+              flex: 1,
+              paddingLeft: 5,
+              paddingRight: 5,
             }}
-            onKeyDown={onKeyDown}
           >
-            <SchedulesProvider query={schedulesQuery}>
-              <BudgetCategories
-                categoryGroups={categoryGroups}
-                editingCell={editing}
-                onEditMonth={onEditMonth}
-                onEditName={onEditName}
-                onSaveCategory={onSaveCategory}
-                onSaveGroup={onSaveGroup}
-                onDeleteCategory={onDeleteCategory}
-                onDeleteGroup={onDeleteGroup}
-                onReorderCategory={_onReorderCategory}
-                onReorderGroup={_onReorderGroup}
-                onBudgetAction={onBudgetAction}
-                onShowActivity={onShowActivity}
-                onApplyBudgetTemplatesInGroup={onApplyBudgetTemplatesInGroup}
-              />
-            </SchedulesProvider>
+            <View
+              style={{
+                flexShrink: 0,
+              }}
+              onKeyDown={onKeyDown}
+            >
+              <SchedulesProvider query={schedulesQuery}>
+                <BudgetCategories
+                  categoryGroups={categoryGroups}
+                  editingCell={editing}
+                  onEditMonth={onEditMonth}
+                  onEditName={onEditName}
+                  onSaveCategory={onSaveCategory}
+                  onSaveGroup={onSaveGroup}
+                  onDeleteCategory={onDeleteCategory}
+                  onDeleteGroup={onDeleteGroup}
+                  onReorderCategory={_onReorderCategory}
+                  onReorderGroup={_onReorderGroup}
+                  onBudgetAction={onBudgetAction}
+                  onShowActivity={onShowActivity}
+                  onApplyBudgetTemplatesInGroup={onApplyBudgetTemplatesInGroup}
+                />
+              </SchedulesProvider>
+            </View>
+            {/* Weekly allocation running total */}
+            <WeeklyAllocationSummary
+              categoryGroups={categoryGroups}
+              month={startMonth}
+              type={type}
+            />
           </View>
-          {/* Weekly allocation running total */}
-          <WeeklyAllocationSummary
-            categoryGroups={categoryGroups}
-            month={startMonth}
-            type={type}
-          />
-        </View>
-      </MonthsProvider>
-    </View>
+        </MonthsProvider>
+      </View>
+    </AllocationPeriodSpendingProvider>
   );
 }
 
@@ -336,10 +341,14 @@ function WeeklyAllocationSummary({
   const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
   const allocationPeriod =
     (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const format = useFormat();
 
   const budgetMonthMethod =
     type === 'tracking' ? 'tracking-budget-month' : 'envelope-budget-month';
-  const budgetSheetPrefix = `${sheetForMonth(month)}!budget-`;
+  // month may be a full date (yyyy-MM-dd) when period navigation is active;
+  // normalize to yyyy-MM for all backend and spreadsheet operations.
+  const normalizedMonth = month.slice(0, 7);
+  const budgetSheetPrefix = `${sheetForMonth(normalizedMonth)}!budget-`;
 
   const [monthValues, setMonthValues] = useState<
     Array<{ name: string; value: unknown }>
@@ -349,11 +358,9 @@ function WeeklyAllocationSummary({
     let cancelled = false;
 
     async function fetchMonthData() {
-      const data = await send(budgetMonthMethod, { month });
+      const data = await send(budgetMonthMethod, { month: normalizedMonth });
       if (!cancelled) {
-        setMonthValues(
-          (data as Array<{ name: string; value: unknown }>) ?? [],
-        );
+        setMonthValues((data as Array<{ name: string; value: unknown }>) ?? []);
       }
     }
 
@@ -372,12 +379,15 @@ function WeeklyAllocationSummary({
       cancelled = true;
       unlisten();
     };
-  }, [budgetMonthMethod, budgetSheetPrefix, month]);
+  }, [budgetMonthMethod, budgetSheetPrefix, normalizedMonth]);
 
   const budgetedByCategory = useMemo(() => {
     const map = new Map<string, number>();
 
-    for (const value of monthValues as Array<{ name: string; value: unknown }>) {
+    for (const value of monthValues as Array<{
+      name: string;
+      value: unknown;
+    }>) {
       const match = value.name.match(/budget-(.+)$/);
       if (!match || typeof value.value !== 'number') {
         continue;
@@ -395,13 +405,6 @@ function WeeklyAllocationSummary({
       : allocationPeriod === 'monthly'
         ? 'monthly allocation'
         : 'weekly allocation';
-
-  const allocationSuffix =
-    allocationPeriod === 'fortnightly'
-      ? '/fortnight'
-      : allocationPeriod === 'monthly'
-        ? '/month'
-        : '/week';
 
   const total = useMemo(() => {
     return categoryGroups
@@ -421,25 +424,26 @@ function WeeklyAllocationSummary({
   }, [allocationPeriod, budgetedByCategory, categoryGroups]);
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        padding: '8px 16px',
-        borderTop: `1px solid ${theme.tableBorder}`,
-        backgroundColor: theme.tableBackground,
-        flexShrink: 0,
-        gap: 8,
-      }}
-    >
-      <Text style={{ fontSize: 13, color: theme.tableTextSubdued }}>
-        <Trans>Total {{allocationLabel}}:</Trans>
-      </Text>
-      <Text style={{ fontSize: 15, fontWeight: 600, color: theme.tableText }}>
-        {integerToCurrency(total)}
-        {allocationSuffix}
-      </Text>
+    <View style={{ flexDirection: 'column', flexShrink: 0 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          padding: '8px 16px',
+          borderTop: `1px solid ${theme.tableBorder}`,
+          backgroundColor: theme.tableBackground,
+          flexShrink: 0,
+          gap: 8,
+        }}
+      >
+        <Text style={{ fontSize: 13, color: theme.tableTextSubdued }}>
+          <Trans>Total {{ allocationLabel }}:</Trans>
+        </Text>
+        <Text style={{ fontSize: 15, fontWeight: 600, color: theme.tableText }}>
+          {format(total, 'financial')}
+        </Text>
+      </View>
     </View>
   );
 }

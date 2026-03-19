@@ -57,7 +57,7 @@ services:
     image: grumnuts/actual:latest
     container_name: actual
     ports:
-      - "5006:5006"
+      - '5006:5006'
     volumes:
       - ./data:/data
     restart: unless-stopped
@@ -65,10 +65,10 @@ services:
 
 #### Available tags
 
-| Tag | Description |
-|-----|-------------|
+| Tag      | Description                        |
+| -------- | ---------------------------------- |
 | `latest` | Latest stable build from this fork |
-| `x.y.z` | Pinned version releases |
+| `x.y.z`  | Pinned version releases            |
 
 ---
 
@@ -103,4 +103,4 @@ MIT — same as upstream. See [LICENSE](./LICENSE) for details.
 
 ---
 
-*Originally forked from the main Actual Budget project.*
+_Originally forked from the main Actual Budget project._

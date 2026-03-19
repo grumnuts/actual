@@ -6,6 +6,8 @@ import { InitialFocus } from '@actual-app/components/initial-focus';
 import { styles } from '@actual-app/components/styles';
 import { View } from '@actual-app/components/view';
 
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
+
 import { useEnvelopeSheetValue } from '@desktop-client/components/budget/envelope/EnvelopeBudgetComponents';
 import {
   Modal,
@@ -14,6 +16,7 @@ import {
 } from '@desktop-client/components/common/Modal';
 import { FieldLabel } from '@desktop-client/components/mobile/MobileForms';
 import { AmountInput } from '@desktop-client/components/util/AmountInput';
+import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { useSyncedPref } from '@desktop-client/hooks/useSyncedPref';
 import type { Modal as ModalType } from '@desktop-client/modals/modalsSlice';
 import { envelopeBudget } from '@desktop-client/spreadsheet/bindings';
@@ -25,6 +28,15 @@ type HoldBufferModalProps = Extract<
 
 export function HoldBufferModal({ onSubmit }: HoldBufferModalProps) {
   const { t } = useTranslation(); // Initialize i18next
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const periodLabel =
+    allocationPeriod === 'fortnightly'
+      ? t('fortnight')
+      : allocationPeriod === 'monthly'
+        ? t('month')
+        : t('week');
   const [hideFraction] = useSyncedPref('hideFraction');
   const available = useEnvelopeSheetValue(envelopeBudget.toBudget) ?? 0;
   const [amount, setAmount] = useState<number>(0);
@@ -44,7 +56,7 @@ export function HoldBufferModal({ onSubmit }: HoldBufferModalProps) {
       {({ state }) => (
         <>
           <ModalHeader
-            title={t('Hold for next month')}
+            title={t('Hold for next {{periodLabel}}', { periodLabel })}
             rightContent={<ModalCloseButton onPress={() => state.close()} />}
           />
           <View>

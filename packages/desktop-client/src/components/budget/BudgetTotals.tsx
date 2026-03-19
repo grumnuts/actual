@@ -40,8 +40,9 @@ export const BudgetTotals = memo(function BudgetTotals({
   const { t } = useTranslation();
   const [categoryExpandedStatePref, setCategoryExpandedStatePref] =
     useGlobalPref('categoryExpandedState');
-  const [budgetAllocationPeriod, setBudgetAllocationPeriod] =
-    useGlobalPref('budgetAllocationPeriod');
+  const [budgetAllocationPeriod, setBudgetAllocationPeriod] = useGlobalPref(
+    'budgetAllocationPeriod',
+  );
   const categoryExpandedState = categoryExpandedStatePref ?? 0;
   const allocationPeriod = budgetAllocationPeriod ?? 'weekly';
   const [menuOpen, setMenuOpen] = useState(false);

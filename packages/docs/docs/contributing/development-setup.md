@@ -22,7 +22,7 @@ Before you begin, ensure you have the following installed:
 1. Clone the Actual repository:
 
    ```bash
-  git clone https://github.com/grumnuts/actual.git
+   git clone https://github.com/grumnuts/actual.git
    cd actual
    ```
 

@@ -18,6 +18,7 @@ import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 import type { MonthBounds } from './MonthsContext';
 
 import { Link } from '@desktop-client/components/common/Link';
+import { useDateFormat } from '@desktop-client/hooks/useDateFormat';
 import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { useLocale } from '@desktop-client/hooks/useLocale';
 
@@ -38,56 +39,122 @@ export const MonthPicker = ({
 }: MonthPickerProps) => {
   const locale = useLocale();
   const { t } = useTranslation();
+  const dateFormat = useDateFormat() || 'MM/dd/yyyy';
+  const dayMonthFormat = monthUtils.getDayMonthFormat(dateFormat);
   const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
   const allocationPeriod =
     (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
 
   const currentMonth = monthUtils.currentMonth();
 
-  function getPeriodForMonth(month: string) {
-    const monthStart = monthUtils.firstDayOfMonth(month);
-
+  // Returns the canonical ISO week start date (yyyy-MM-dd) for the week
+  // containing the given date/month. For monthly mode returns first-of-month.
+  function getPeriodStartDate(refDate: string): string {
     if (allocationPeriod === 'monthly') {
+      return monthUtils.firstDayOfMonth(refDate);
+    }
+    // If refDate is yyyy-MM (no day part), resolve to first day of that month
+    const date =
+      refDate.length <= 7 ? monthUtils.firstDayOfMonth(refDate) : refDate;
+
+    if (allocationPeriod === 'weekly') {
+      // For weekly: return Monday of the ISO week
+      return monthUtils.getISOWeekStart(date);
+    } else {
+      // For fortnightly: calculate 2-week periods starting Monday of week 1
+      const isoWeekNumber = monthUtils.getISOWeekNumber(date);
+      const isoWeekYear = monthUtils.getISOWeekYear(date);
+
+      // For fortnights, use an even/odd system based on ISO week number
+      // Fortnight 1 = weeks 1-2, Fortnight 2 = weeks 3-4, etc.
+      const fortnight = Math.ceil(isoWeekNumber / 2);
+
+      // Go back to week 1 of that year, then move forward to the start of the fortnight
+      const week1Start = monthUtils.getISOWeekStart(
+        `${isoWeekYear}-01-04`, // Jan 4 is always in week 1 per ISO 8601
+      );
+      const daysToAdd = (fortnight - 1) * 14;
+      return monthUtils.addDays(week1Start, daysToAdd);
+    }
+  }
+
+  // Returns display info for a period whose start date is periodStart (yyyy-MM-dd
+  // for weekly/fortnightly, yyyy-MM for monthly).
+  function getPeriodForMonth(periodStart: string) {
+    if (allocationPeriod === 'monthly') {
+      const month = periodStart.slice(0, 7);
+      const monthStartDate = monthUtils.firstDayOfMonth(month);
       return {
         title: monthUtils.format(month, 'MMMM', locale),
-        range: `${monthUtils.format(monthStart, 'MMM d', locale)} - ${monthUtils.format(monthUtils.lastDayOfMonth(month), 'MMM d', locale)}`,
+        year: monthUtils.getYear(month),
+        range: `${monthUtils.format(monthStartDate, dayMonthFormat)} - ${monthUtils.format(monthUtils.lastDayOfMonth(month), dayMonthFormat)}`,
       };
     }
 
-    const yearStart = `${monthUtils.getYear(month)}-01-01`;
-    const dayOfYear =
-      monthUtils.differenceInCalendarDays(monthStart, yearStart) + 1;
-    const periodLength = allocationPeriod === 'weekly' ? 7 : 14;
-    const periodNumber = Math.floor((dayOfYear - 1) / periodLength) + 1;
-    const periodStart = monthUtils.addDays(
-      yearStart,
-      (periodNumber - 1) * periodLength,
-    );
-    const periodEnd = monthUtils.addDays(periodStart, periodLength - 1);
-
-    return {
-      title:
-        allocationPeriod === 'weekly'
-          ? t('Week {{number}}', { number: periodNumber })
-          : t('Fortnight {{number}}', { number: periodNumber }),
-      range: `${monthUtils.format(periodStart, 'MMM d', locale)} - ${monthUtils.format(periodEnd, 'MMM d', locale)}`,
-    };
+    if (allocationPeriod === 'weekly') {
+      const weekNumber = monthUtils.getISOWeekNumber(periodStart);
+      const weekEnd = monthUtils.getISOWeekEnd(periodStart);
+      return {
+        title: t('Week {{number}}', { number: weekNumber }),
+        year: String(monthUtils.getISOWeekYear(periodStart)),
+        range: `${monthUtils.format(periodStart, dayMonthFormat)} - ${monthUtils.format(weekEnd, dayMonthFormat)}`,
+      };
+    } else {
+      // Fortnightly
+      const weekNumber = monthUtils.getISOWeekNumber(periodStart);
+      const fortnight = Math.ceil(weekNumber / 2);
+      const periodEnd = monthUtils.addDays(periodStart, 13); // 2 weeks - 1 day
+      return {
+        title: t('Fortnight {{number}}', { number: fortnight }),
+        year: String(monthUtils.getISOWeekYear(periodStart)),
+        range: `${monthUtils.format(periodStart, dayMonthFormat)} - ${monthUtils.format(periodEnd, dayMonthFormat)}`,
+      };
+    }
   }
 
+  const periodDays =
+    allocationPeriod === 'weekly'
+      ? 7
+      : allocationPeriod === 'fortnightly'
+        ? 14
+        : 0;
+
+  // In weekly/fortnightly mode the current period start may be a full date
+  // (yyyy-MM-dd). For monthly mode it stays as the first day of the stored month.
+  const currentPeriodStart = getPeriodStartDate(startMonth);
+
+  const prevPeriodStart =
+    allocationPeriod === 'monthly'
+      ? monthUtils.firstDayOfMonth(monthUtils.prevMonth(startMonth))
+      : monthUtils.subDays(currentPeriodStart, periodDays);
+
+  const nextPeriodStart =
+    allocationPeriod === 'monthly'
+      ? monthUtils.firstDayOfMonth(monthUtils.nextMonth(startMonth))
+      : monthUtils.addDays(currentPeriodStart, periodDays);
+
+  const todayPeriodStart = getPeriodStartDate(
+    allocationPeriod === 'monthly' ? currentMonth : monthUtils.currentDay(),
+  );
+
   const visiblePeriods = [
-    monthUtils.prevMonth(startMonth),
-    startMonth,
-    monthUtils.nextMonth(startMonth),
-  ].map(month => {
-    const period = getPeriodForMonth(month);
+    prevPeriodStart,
+    currentPeriodStart,
+    nextPeriodStart,
+  ].map(periodStart => {
+    const period = getPeriodForMonth(periodStart);
+    const monthSlice = periodStart.slice(0, 7);
 
     return {
-      month,
+      month: periodStart,
       title: period.title,
+      year: period.year,
       range: period.range,
-      isBudgeted: month >= monthBounds.start && month <= monthBounds.end,
-      isSelected: month === startMonth,
-      isCurrent: month === currentMonth,
+      isBudgeted:
+        monthSlice >= monthBounds.start.slice(0, 7) &&
+        monthSlice <= monthBounds.end.slice(0, 7),
+      isSelected: periodStart === currentPeriodStart,
+      isCurrent: periodStart === todayPeriodStart,
     };
   });
 
@@ -120,7 +187,7 @@ export const MonthPicker = ({
           <Link
             variant="button"
             buttonVariant="bare"
-            onPress={() => onSelect(currentMonth)}
+            onPress={() => onSelect(todayPeriodStart)}
             style={{ padding: '3px 3px' }}
           >
             <View title={t('Today')}>
@@ -135,7 +202,7 @@ export const MonthPicker = ({
           <Link
             variant="button"
             buttonVariant="bare"
-            onPress={() => onSelect(monthUtils.prevMonth(startMonth))}
+            onPress={() => onSelect(prevPeriodStart)}
             style={{ padding: '3px 3px' }}
           >
             <View title={t('Previous month')}>
@@ -214,6 +281,17 @@ export const MonthPicker = ({
                   maxWidth: '100%',
                 }}
               >
+                {period.year}
+              </View>
+              <View
+                style={{
+                  fontSize: 11,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%',
+                }}
+              >
                 {period.range}
               </View>
             </View>
@@ -232,7 +310,7 @@ export const MonthPicker = ({
           <Link
             variant="button"
             buttonVariant="bare"
-            onPress={() => onSelect(monthUtils.nextMonth(startMonth))}
+            onPress={() => onSelect(nextPeriodStart)}
             style={{ padding: '3px 3px' }}
           >
             <View title={t('Next month')}>

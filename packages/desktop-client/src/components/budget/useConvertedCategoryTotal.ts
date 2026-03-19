@@ -1,23 +1,20 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 
-import {
-  calculateAllocationForPeriod,
-  type BudgetAllocationPeriod,
-} from 'loot-core/shared/weeklyAllocation';
+import { calculateAllocationForPeriod } from 'loot-core/shared/weeklyAllocation';
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 import type { CategoryEntity } from 'loot-core/types/models';
 
 import { useSheetName } from '@desktop-client/hooks/useSheetName';
 import { useSpreadsheet } from '@desktop-client/hooks/useSpreadsheet';
-import type { Binding } from '@desktop-client/spreadsheet';
+import type { Binding, SheetFields } from '@desktop-client/spreadsheet';
 
 type BudgetSheetName = 'envelope-budget' | 'tracking-budget';
-type BudgetFieldName = 'budget' | 'sum-amount' | 'leftover';
 
 type UseConvertedCategoryTotalParams<SheetName extends BudgetSheetName> = {
   categories: CategoryEntity[];
   allocationPeriod: BudgetAllocationPeriod;
-  bindingFactory: (id: string) => Binding<SheetName, BudgetFieldName>;
-  sheetBinding: Binding<SheetName, BudgetFieldName>;
+  bindingFactory: (id: string) => Binding<SheetName, SheetFields<SheetName>>;
+  sheetBinding: Binding<SheetName, SheetFields<SheetName>>;
 };
 
 export function useConvertedCategoryTotal<SheetName extends BudgetSheetName>({
@@ -32,7 +29,9 @@ export function useConvertedCategoryTotal<SheetName extends BudgetSheetName>({
   const categoryKey = useMemo(
     () =>
       categories
-        .map(category => `${category.id}:${category.billing_period ?? 'monthly'}`)
+        .map(
+          category => `${category.id}:${category.billing_period ?? 'monthly'}`,
+        )
         .join('|'),
     [categories],
   );
@@ -42,7 +41,7 @@ export function useConvertedCategoryTotal<SheetName extends BudgetSheetName>({
         id: category.id,
         billingPeriod: category.billing_period ?? 'monthly',
       })),
-    [categoryKey],
+    [categories],
   );
 
   useLayoutEffect(() => {
@@ -76,7 +75,10 @@ export function useConvertedCategoryTotal<SheetName extends BudgetSheetName>({
 
     const unbinds = categoryMetadata.map(category =>
       spreadsheet.bind(sheetName, bindingFactory(category.id), result => {
-        values.set(category.id, typeof result.value === 'number' ? result.value : 0);
+        values.set(
+          category.id,
+          typeof result.value === 'number' ? result.value : 0,
+        );
         recomputeTotal();
       }),
     );
@@ -87,7 +89,14 @@ export function useConvertedCategoryTotal<SheetName extends BudgetSheetName>({
       isMounted = false;
       unbinds.forEach(unbind => unbind());
     };
-  }, [allocationPeriod, bindingFactory, categoryKey, categoryMetadata, sheetName, spreadsheet]);
+  }, [
+    allocationPeriod,
+    bindingFactory,
+    categoryKey,
+    categoryMetadata,
+    sheetName,
+    spreadsheet,
+  ]);
 
   return total;
 }

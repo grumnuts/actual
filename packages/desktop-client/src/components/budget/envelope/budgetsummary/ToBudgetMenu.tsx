@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next';
 
 import { Menu } from '@actual-app/components/menu';
 
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
+
 import { useEnvelopeSheetValue } from '@desktop-client/components/budget/envelope/EnvelopeBudgetComponents';
+import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { envelopeBudget } from '@desktop-client/spreadsheet/bindings';
 
 type ToBudgetMenuProps = Omit<
@@ -29,6 +32,15 @@ export function ToBudgetMenu({
   ...props
 }: ToBudgetMenuProps) {
   const { t } = useTranslation();
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const periodLabel =
+    allocationPeriod === 'fortnightly'
+      ? t('fortnight')
+      : allocationPeriod === 'monthly'
+        ? t('month')
+        : t('week');
 
   const toBudget = useEnvelopeSheetValue(envelopeBudget.toBudget) ?? 0;
   const forNextMonth = useEnvelopeSheetValue(envelopeBudget.forNextMonth) ?? 0;
@@ -48,7 +60,7 @@ export function ToBudgetMenu({
       ? [
           {
             name: 'buffer',
-            text: t('Hold for next month'),
+            text: t('Hold for next {{periodLabel}}', { periodLabel }),
           },
         ]
       : []),
@@ -72,7 +84,7 @@ export function ToBudgetMenu({
       ? [
           {
             name: 'reset-buffer',
-            text: t("Reset next month's buffer"),
+            text: t("Reset next {{periodLabel}}'s buffer", { periodLabel }),
           },
         ]
       : []),
