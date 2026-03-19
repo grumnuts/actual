@@ -14,8 +14,6 @@ import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
-import { useAllocationPeriodSpending } from 'packages/desktop-client/src/components/budget/AllocationPeriodSpendingContext';
-import { useConvertedCategoryTotal } from 'packages/desktop-client/src/components/budget/useConvertedCategoryTotal';
 
 import * as monthUtils from 'loot-core/shared/months';
 import {
@@ -30,7 +28,9 @@ import { BalanceMovementMenu } from './BalanceMovementMenu';
 import { BudgetMenu } from './BudgetMenu';
 import { IncomeMenu } from './IncomeMenu';
 
+import { useAllocationPeriodSpending } from '@desktop-client/components/budget/AllocationPeriodSpendingContext';
 import { BalanceWithCarryover } from '@desktop-client/components/budget/BalanceWithCarryover';
+import { useConvertedCategoryTotal } from '@desktop-client/components/budget/useConvertedCategoryTotal';
 import { makeAmountGrey } from '@desktop-client/components/budget/util';
 import {
   CellValue,

@@ -16,14 +16,17 @@ import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
 
 import * as monthUtils from 'loot-core/shared/months';
+import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 
 import { BudgetMonthMenu } from './BudgetMonthMenu';
 import { ExpenseTotal } from './ExpenseTotal';
 import { IncomeTotal } from './IncomeTotal';
 import { Saved } from './Saved';
 
+import { useAllocationPeriodSpending } from '@desktop-client/components/budget/AllocationPeriodSpendingContext';
 import { useTrackingBudget } from '@desktop-client/components/budget/tracking/TrackingBudgetContext';
 import { NotesButton } from '@desktop-client/components/NotesButton';
+import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { useLocale } from '@desktop-client/hooks/useLocale';
 import { SheetNameProvider } from '@desktop-client/hooks/useSheetName';
 import { useUndo } from '@desktop-client/hooks/useUndo';
@@ -58,6 +61,24 @@ export function BudgetSummary({ month }: BudgetSummaryProps) {
     : SvgArrowButtonUp1;
 
   const displayMonth = monthUtils.format(month, "MMMM ''yy", locale);
+  const { periodStart } = useAllocationPeriodSpending();
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const periodReferenceDate =
+    allocationPeriod === 'monthly' ? month : periodStart;
+  const periodTitle =
+    allocationPeriod === 'monthly'
+      ? monthUtils.format(month, 'MMMM', locale)
+      : allocationPeriod === 'weekly'
+        ? t('Week {{number}}', {
+            number: monthUtils.getISOWeekNumber(periodReferenceDate),
+          })
+        : t('Fortnight {{number}}', {
+            number: Math.ceil(
+              monthUtils.getISOWeekNumber(periodReferenceDate) / 2,
+            ),
+          });
 
   return (
     <View
@@ -126,7 +147,7 @@ export function BudgetSummary({ month }: BudgetSummaryProps) {
               textDecorationSkip: 'ink',
             })}
           >
-            {monthUtils.format(month, 'MMMM', locale)}
+            {periodTitle}
           </div>
 
           <View

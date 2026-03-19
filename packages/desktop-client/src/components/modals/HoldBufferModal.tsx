@@ -31,12 +31,6 @@ export function HoldBufferModal({ onSubmit }: HoldBufferModalProps) {
   const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
   const allocationPeriod =
     (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
-  const periodLabel =
-    allocationPeriod === 'fortnightly'
-      ? t('fortnight')
-      : allocationPeriod === 'monthly'
-        ? t('month')
-        : t('week');
   const [hideFraction] = useSyncedPref('hideFraction');
   const available = useEnvelopeSheetValue(envelopeBudget.toBudget) ?? 0;
   const [amount, setAmount] = useState<number>(0);
@@ -56,7 +50,13 @@ export function HoldBufferModal({ onSubmit }: HoldBufferModalProps) {
       {({ state }) => (
         <>
           <ModalHeader
-            title={t('Hold for next {{periodLabel}}', { periodLabel })}
+            title={
+              allocationPeriod === 'monthly'
+                ? t('Hold for next month')
+                : allocationPeriod === 'fortnightly'
+                  ? t('Hold for next fortnight')
+                  : t('Hold for next week')
+            }
             rightContent={<ModalCloseButton onPress={() => state.close()} />}
           />
           <View>

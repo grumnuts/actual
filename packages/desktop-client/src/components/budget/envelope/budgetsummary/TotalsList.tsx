@@ -7,13 +7,13 @@ import { Block } from '@actual-app/components/block';
 import { styles } from '@actual-app/components/styles';
 import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
-import { useConvertedCategoryTotal } from 'packages/desktop-client/src/components/budget/useConvertedCategoryTotal';
 
 import { calculateMonthlyAmountForPeriod } from 'loot-core/shared/weeklyAllocation';
 import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 
 import { useAllocationPeriodSpending } from '@desktop-client/components/budget/AllocationPeriodSpendingContext';
 import { EnvelopeCellValue } from '@desktop-client/components/budget/envelope/EnvelopeBudgetComponents';
+import { useConvertedCategoryTotal } from '@desktop-client/components/budget/useConvertedCategoryTotal';
 import { CellValueText } from '@desktop-client/components/spreadsheet/CellValue';
 import { useCategories } from '@desktop-client/hooks/useCategories';
 import { useFormat } from '@desktop-client/hooks/useFormat';
@@ -58,15 +58,6 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
   const allocationPeriod =
     (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
   const { periodIncome } = useAllocationPeriodSpending();
-
-  const periodLabel =
-    allocationPeriod === 'fortnightly'
-      ? 'fortnight'
-      : allocationPeriod === 'monthly'
-        ? 'month'
-        : 'week';
-  const previousPeriodLabel =
-    allocationPeriod === 'monthly' ? prevMonthName : `previous ${periodLabel}`;
 
   const convert = (value: number) =>
     calculateMonthlyAmountForPeriod(value, allocationPeriod);
@@ -201,17 +192,43 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
           <Trans>Available funds</Trans>
         </Block>
 
-        <Block>
-          <Trans>Overspent in {{ prevMonthName: previousPeriodLabel }}</Trans>
-        </Block>
-
-        <Block>
-          <Trans>Budgeted ({{ periodLabel }})</Trans>
-        </Block>
-
-        <Block>
-          <Trans>For next {{ periodLabel }}</Trans>
-        </Block>
+        {allocationPeriod === 'monthly' ? (
+          <>
+            <Block>
+              <Trans>Overspent in {{ prevMonthName }}</Trans>
+            </Block>
+            <Block>
+              <Trans>Budgeted (month)</Trans>
+            </Block>
+            <Block>
+              <Trans>For next month</Trans>
+            </Block>
+          </>
+        ) : allocationPeriod === 'fortnightly' ? (
+          <>
+            <Block>
+              <Trans>Overspent in previous fortnight</Trans>
+            </Block>
+            <Block>
+              <Trans>Budgeted (fortnight)</Trans>
+            </Block>
+            <Block>
+              <Trans>For next fortnight</Trans>
+            </Block>
+          </>
+        ) : (
+          <>
+            <Block>
+              <Trans>Overspent in previous week</Trans>
+            </Block>
+            <Block>
+              <Trans>Budgeted (week)</Trans>
+            </Block>
+            <Block>
+              <Trans>For next week</Trans>
+            </Block>
+          </>
+        )}
       </View>
     </View>
   );

@@ -8,7 +8,6 @@ import { theme } from '@actual-app/components/theme';
 import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
-import { useConvertedCategoryTotal } from 'packages/desktop-client/src/components/budget/useConvertedCategoryTotal';
 
 import { calculateMonthlyAmountForPeriod } from 'loot-core/shared/weeklyAllocation';
 import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
@@ -20,6 +19,7 @@ import {
   useEnvelopeSheetName,
   useEnvelopeSheetValue,
 } from '@desktop-client/components/budget/envelope/EnvelopeBudgetComponents';
+import { useConvertedCategoryTotal } from '@desktop-client/components/budget/useConvertedCategoryTotal';
 import { FinancialText } from '@desktop-client/components/FinancialText';
 import { PrivacyFilter } from '@desktop-client/components/PrivacyFilter';
 import { useCategories } from '@desktop-client/hooks/useCategories';

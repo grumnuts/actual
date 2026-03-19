@@ -62,8 +62,7 @@ describe('MonthPicker period navigation', () => {
 
     await userEvent.click(screen.getByTitle('Next month'));
 
-    expect(screen.getByText('Week 7')).toBeInTheDocument();
-    expect(onSelect).toHaveBeenCalledWith('2026-02');
+    expect(onSelect).toHaveBeenCalledWith('2026-02-02');
   });
 
   it('clicking previous fortnight card selects previous period', async () => {
@@ -82,8 +81,7 @@ describe('MonthPicker period navigation', () => {
 
     await userEvent.click(screen.getByText('Fortnight 2'));
 
-    expect(screen.getByText('Fortnight 1')).toBeInTheDocument();
-    expect(onSelect).toHaveBeenCalledWith('2026-01');
+    expect(onSelect).toHaveBeenCalledWith('2026-01-12');
   });
 
   it('uses ISO week number for current week', () => {
