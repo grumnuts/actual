@@ -20,8 +20,8 @@ permissions:
 
 env:
   IMAGES: |
-    ${{ !github.event.repository.fork && 'grumnuts/actual-web' || '' }}
-    ghcr.io/${{ github.repository_owner }}/actual-web
+    ${{ !github.event.repository.fork && 'grumnuts/actual' || '' }}
+    ghcr.io/${{ github.repository_owner }}/actual
 
 jobs:
   build:
