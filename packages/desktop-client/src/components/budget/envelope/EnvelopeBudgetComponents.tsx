@@ -709,25 +709,40 @@ type IncomeGroupMonthProps = {
   month: string;
 };
 export function IncomeGroupMonth({ month }: IncomeGroupMonthProps) {
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const { periodIncome } = useAllocationPeriodSpending();
+
   return (
     <View style={{ flex: 1 }}>
-      <EnvelopeSheetCell
+      <Field
         name="received"
         width="flex"
-        textAlign="right"
-        style={{
-          fontWeight: 600,
-          paddingRight: styles.monthRightPadding,
-          ...styles.tnum,
-          backgroundColor: monthUtils.isCurrentMonth(month)
-            ? theme.budgetHeaderCurrentMonth
-            : theme.budgetHeaderOtherMonth,
-        }}
-        valueProps={{
-          binding: envelopeBudget.groupIncomeReceived,
-          type: 'financial',
-        }}
-      />
+        style={{ textAlign: 'right' }}
+      >
+        <EnvelopeCellValue
+          binding={envelopeBudget.groupIncomeReceived}
+          type="financial"
+        >
+          {props => (
+            <CellValueText
+              {...props}
+              value={
+                allocationPeriod === 'monthly' ? props.value : periodIncome
+              }
+              style={{
+                fontWeight: 600,
+                paddingRight: styles.monthRightPadding,
+                ...styles.tnum,
+                backgroundColor: monthUtils.isCurrentMonth(month)
+                  ? theme.budgetHeaderCurrentMonth
+                  : theme.budgetHeaderOtherMonth,
+              }}
+            />
+          )}
+        </EnvelopeCellValue>
+      </Field>
     </View>
   );
 }
@@ -739,6 +754,12 @@ export function IncomeCategoryMonth({
   onShowActivity,
   onBudgetAction,
 }: CategoryMonthProps) {
+  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
+  const allocationPeriod =
+    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
+  const { spentByCategory } = useAllocationPeriodSpending();
+  const categoryIncomeForPeriod = spentByCategory.get(category.id) ?? 0;
+
   const incomeMenuTriggerRef = useRef(null);
   const {
     setMenuOpen: setIncomeMenuOpen,
@@ -800,7 +821,19 @@ export function IncomeCategoryMonth({
               goal={envelopeBudget.catGoal(category.id)}
               budgeted={envelopeBudget.catBudgeted(category.id)}
               longGoal={envelopeBudget.catLongGoal(category.id)}
-            />
+            >
+              {props => (
+                <CellValueText
+                  {...props}
+                  value={
+                    allocationPeriod === 'monthly'
+                      ? props.value
+                      : categoryIncomeForPeriod
+                  }
+                  className={props.className}
+                />
+              )}
+            </BalanceWithCarryover>
           </Button>
           <Popover
             triggerRef={incomeMenuTriggerRef}
