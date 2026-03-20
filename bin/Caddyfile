@@ -1,0 +1,12 @@
+:3001 {
+	root * /srv
+	encode zstd gzip
+
+	header {
+		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Embedder-Policy require-corp
+	}
+
+	try_files {path} {path}/ /index.html
+	file_server
+}

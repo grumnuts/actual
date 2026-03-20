@@ -39,29 +39,11 @@ ENV NODE_OPTIONS=--max_old_space_size=8192
 
 RUN yarn build:browser
 
-FROM node:22-bookworm-slim AS prod
+FROM caddy:2.10-alpine AS prod
 
-# Install minimal runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+# Serve only static browser build artifacts in production
+COPY --from=builder /app/packages/desktop-client/build /srv
+COPY ./bin/Caddyfile /etc/caddy/Caddyfile
 
-WORKDIR /app
-
-# Copy the built browser assets
-COPY --from=builder /app/packages/desktop-client/build ./packages/desktop-client/build
-COPY --from=builder /app/packages/plugins-service/dist ./packages/plugins-service/dist
-COPY --from=builder /app/node_modules ./node_modules
-
-# Copy Yarn release binary (required by .yarnrc.yml)
-COPY --from=builder /app/.yarn ./.yarn
-
-# Copy source files needed for runtime
-COPY package.json yarn.lock .yarnrc.yml tsconfig.json ./
-COPY packages/desktop-client/package.json ./packages/desktop-client/
-COPY packages/plugins-service/package.json ./packages/plugins-service/
-COPY bin/ ./bin/
-
-# Create a simple startup script for the web interface
 ENV PORT=3001
 EXPOSE $PORT
-
-CMD ["sh", "-c", "cd /app && yarn workspace @actual-app/web start:browser --host"]
