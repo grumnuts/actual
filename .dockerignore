@@ -41,6 +41,12 @@ packages/desktop-electron/e2e
 packages/docs
 packages/ci-actions
 
+# Required by sync-server docker image (single-container web+api)
+!packages/desktop-client/build
+!packages/desktop-client/build/**
+!packages/sync-server/build
+!packages/sync-server/build/**
+
 # Test-only source and snapshots
 **/__tests__
 **/__snapshots__
