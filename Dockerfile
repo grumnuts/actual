@@ -3,7 +3,7 @@
 # Supports: linux/amd64, linux/arm64
 ###################################################
 
-FROM node:22-bookworm AS deps
+FROM --platform=$BUILDPLATFORM node:22-bookworm AS deps
 
 # Install required packages
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
@@ -27,7 +27,7 @@ COPY ./bin/package-browser ./bin/package-browser
 
 RUN corepack enable && yarn install
 
-FROM deps AS builder
+FROM --platform=$BUILDPLATFORM deps AS builder
 
 WORKDIR /app
 
