@@ -172,19 +172,21 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
           {signedFormatter(-convertedBudgetTotal, 'financial')}
         </Block>
 
-        <EnvelopeCellValue
-          binding={envelopeBudget.forNextMonth}
-          type="financial"
-        >
-          {props => (
-            <CellValueText
-              {...props}
-              value={convert(props.value)}
-              style={{ fontWeight: 600 }}
-              formatter={invertedSignedFormatter}
-            />
-          )}
-        </EnvelopeCellValue>
+        {allocationPeriod === 'monthly' && (
+          <EnvelopeCellValue
+            binding={envelopeBudget.forNextMonth}
+            type="financial"
+          >
+            {props => (
+              <CellValueText
+                {...props}
+                value={convert(props.value)}
+                style={{ fontWeight: 600 }}
+                formatter={invertedSignedFormatter}
+              />
+            )}
+          </EnvelopeCellValue>
+        )}
       </View>
 
       <View>
@@ -212,9 +214,6 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
             <Block>
               <Trans>Budgeted (fortnight)</Trans>
             </Block>
-            <Block>
-              <Trans>For next fortnight</Trans>
-            </Block>
           </>
         ) : (
           <>
@@ -223,9 +222,6 @@ export function TotalsList({ prevMonthName, style }: TotalsListProps) {
             </Block>
             <Block>
               <Trans>Budgeted (week)</Trans>
-            </Block>
-            <Block>
-              <Trans>For next week</Trans>
             </Block>
           </>
         )}

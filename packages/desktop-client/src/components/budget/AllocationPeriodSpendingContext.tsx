@@ -11,6 +11,7 @@ import * as monthUtils from 'loot-core/shared/months';
 import { q } from 'loot-core/shared/query';
 import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 import type { CategoryGroupEntity } from 'loot-core/types/models';
+import type { BillingPeriod } from 'loot-core/types/models/category';
 
 import { useGlobalPref } from '@desktop-client/hooks/useGlobalPref';
 import { liveQuery } from '@desktop-client/queries/liveQuery';
@@ -77,6 +78,66 @@ function getPeriodBounds(
   };
 }
 
+function getDateBoundsForBillingPeriod(
+  billingPeriod: BillingPeriod,
+  startMonth: string,
+): { start: string; end: string } {
+  const refDate = getReferenceDate(startMonth);
+
+  switch (billingPeriod) {
+    case 'weekly':
+      return {
+        start: monthUtils.getISOWeekStart(refDate),
+        end: monthUtils.getISOWeekEnd(refDate),
+      };
+
+    case 'fortnightly': {
+      const isoWeekNumber = monthUtils.getISOWeekNumber(refDate);
+      const isoWeekYear = monthUtils.getISOWeekYear(refDate);
+      const fortnight = Math.ceil(isoWeekNumber / 2);
+      const weekOneStart = monthUtils.getISOWeekStart(`${isoWeekYear}-01-04`);
+      const periodStart = monthUtils.addDays(
+        weekOneStart,
+        (fortnight - 1) * 14,
+      );
+      return {
+        start: periodStart,
+        end: monthUtils.addDays(periodStart, 13),
+      };
+    }
+
+    case 'monthly': {
+      const month = startMonth.slice(0, 7);
+      return {
+        start: monthUtils.firstDayOfMonth(month),
+        end: monthUtils.lastDayOfMonth(month),
+      };
+    }
+
+    case 'quarterly': {
+      const monthIndex = parseInt(refDate.slice(5, 7), 10) - 1;
+      const quarterIndex = Math.floor(monthIndex / 3);
+      const year = refDate.slice(0, 4);
+      const quarterStartMonth = quarterIndex * 3 + 1;
+      const quarterEndMonth = quarterStartMonth + 2;
+      const startMonthStr = `${year}-${String(quarterStartMonth).padStart(2, '0')}`;
+      const endMonthStr = `${year}-${String(quarterEndMonth).padStart(2, '0')}`;
+      return {
+        start: monthUtils.firstDayOfMonth(startMonthStr),
+        end: monthUtils.lastDayOfMonth(endMonthStr),
+      };
+    }
+
+    case 'annually': {
+      const year = refDate.slice(0, 4);
+      return {
+        start: `${year}-01-01`,
+        end: `${year}-12-31`,
+      };
+    }
+  }
+}
+
 export function AllocationPeriodSpendingProvider({
   categoryGroups,
   startMonth,
@@ -88,14 +149,26 @@ export function AllocationPeriodSpendingProvider({
   const [spentByCategory, setSpentByCategory] = useState<Map<string, number>>(
     () => new Map(),
   );
-  const categoryIds = useMemo(
-    () =>
-      categoryGroups.flatMap(group =>
-        (group.categories ?? []).map(category => category.id),
-      ),
-    [categoryGroups],
-  );
-  const categoryIdsKey = categoryIds.join('|');
+
+  // Group categories by billing_period so we can run a query per period
+  const categoryByBillingPeriod = useMemo(() => {
+    const groups = new Map<BillingPeriod, string[]>();
+    for (const group of categoryGroups) {
+      for (const category of group.categories ?? []) {
+        const period: BillingPeriod = category.billing_period ?? 'monthly';
+        if (!groups.has(period)) groups.set(period, []);
+        groups.get(period)!.push(category.id);
+      }
+    }
+    return groups;
+  }, [categoryGroups]);
+
+  const categoryByBillingPeriodKey = useMemo(() => {
+    return [...categoryByBillingPeriod.entries()]
+      .map(([period, ids]) => `${period}:${ids.join(',')}`)
+      .join('|');
+  }, [categoryByBillingPeriod]);
+
   const incomeCategoryIds = useMemo(
     () =>
       categoryGroups
@@ -113,51 +186,75 @@ export function AllocationPeriodSpendingProvider({
   );
 
   useEffect(() => {
-    if (categoryIds.length === 0) {
+    if (categoryByBillingPeriod.size === 0) {
       setSpentByCategory(new Map());
       return;
     }
 
-    const query = q('transactions')
-      .filter({
-        $and: [
-          { date: { $gte: periodStart } },
-          { date: { $lte: periodEnd } },
-          { category: { $oneof: categoryIds } },
-        ],
-      })
-      .options({ splits: 'inline' })
-      .groupBy([{ $id: '$category' }])
-      .select([
-        { category: { $id: '$category' } },
-        { amount: { $sum: '$amount' } },
-      ]);
+    // Partial results keyed by billing period; merged into spentByCategory on each update
+    const partials = new Map<BillingPeriod, Map<string, number>>();
 
-    const subscription = liveQuery<{ category: string; amount: number }>(
-      query,
-      {
+    function mergeAndSet() {
+      const merged = new Map<string, number>();
+      for (const partial of partials.values()) {
+        for (const [id, amount] of partial) {
+          merged.set(id, amount);
+        }
+      }
+      setSpentByCategory(merged);
+    }
+
+    const subscriptions: { unsubscribe: () => void }[] = [];
+
+    for (const [billingPeriod, ids] of categoryByBillingPeriod) {
+      const { start, end } = getDateBoundsForBillingPeriod(
+        billingPeriod,
+        startMonth,
+      );
+      const partialMap = new Map<string, number>();
+      partials.set(billingPeriod, partialMap);
+
+      const query = q('transactions')
+        .filter({
+          $and: [
+            { date: { $gte: start } },
+            { date: { $lte: end } },
+            { category: { $oneof: ids } },
+          ],
+        })
+        .options({ splits: 'inline' })
+        .groupBy([{ $id: '$category' }])
+        .select([
+          { category: { $id: '$category' } },
+          { amount: { $sum: '$amount' } },
+        ]);
+
+      const sub = liveQuery<{ category: string; amount: number }>(query, {
         onData: data => {
-          const nextMap = new Map<string, number>();
+          partialMap.clear();
           data.forEach(item => {
             if (item.category) {
-              nextMap.set(
+              partialMap.set(
                 item.category,
                 typeof item.amount === 'number' ? item.amount : 0,
               );
             }
           });
-          setSpentByCategory(nextMap);
+          mergeAndSet();
         },
         onError: () => {
-          setSpentByCategory(new Map());
+          partialMap.clear();
+          mergeAndSet();
         },
-      },
-    );
+      });
+
+      subscriptions.push(sub);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      subscriptions.forEach(sub => sub.unsubscribe());
     };
-  }, [categoryIds, categoryIdsKey, periodEnd, periodStart]);
+  }, [categoryByBillingPeriodKey, startMonth]);
 
   useEffect(() => {
     if (incomeCategoryIds.length === 0 || allocationPeriod === 'monthly') {

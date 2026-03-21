@@ -16,10 +16,7 @@ import { View } from '@actual-app/components/view';
 import { css } from '@emotion/css';
 
 import * as monthUtils from 'loot-core/shared/months';
-import {
-  calculateAllocationForPeriod,
-  calculateMonthlyAmountForPeriod,
-} from 'loot-core/shared/weeklyAllocation';
+import { calculateAllocationForPeriod } from 'loot-core/shared/weeklyAllocation';
 import type { BudgetAllocationPeriod } from 'loot-core/shared/weeklyAllocation';
 
 import type { CategoryGroupMonthProps, CategoryMonthProps } from '..';
@@ -167,11 +164,7 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
           {props => (
             <CellValueText
               {...props}
-              value={
-                allocationPeriod === 'monthly'
-                  ? props.value
-                  : totalSpentForPeriod
-              }
+              value={totalSpentForPeriod}
               style={cellStyle}
             />
           )}
@@ -182,17 +175,13 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
           <Trans>Balance</Trans>
         </Text>
         <EnvelopeCellValue
-          binding={envelopeBudget.totalBalance}
+          binding={envelopeBudget.totalBudgeted}
           type="financial"
         >
           {props => (
             <CellValueText
               {...props}
-              value={
-                allocationPeriod === 'monthly'
-                  ? props.value
-                  : totalBudgetedForPeriod + totalSpentForPeriod
-              }
+              value={-(props.value ?? 0) + totalSpentForPeriod}
               style={cellStyle}
             />
           )}
@@ -291,11 +280,7 @@ export const ExpenseGroupMonth = memo(function ExpenseGroupMonth({
           {props => (
             <CellValueText
               {...props}
-              value={
-                allocationPeriod === 'monthly'
-                  ? props.value
-                  : groupSpentForPeriod
-              }
+              value={groupSpentForPeriod}
               style={{ fontWeight: 600, ...styles.tnum }}
             />
           )}
@@ -310,17 +295,13 @@ export const ExpenseGroupMonth = memo(function ExpenseGroupMonth({
         }}
       >
         <EnvelopeCellValue
-          binding={envelopeBudget.groupBalance(id)}
+          binding={envelopeBudget.groupBudgeted(id)}
           type="financial"
         >
           {props => (
             <CellValueText
               {...props}
-              value={
-                allocationPeriod === 'monthly'
-                  ? props.value
-                  : groupBudgetedForPeriod + groupSpentForPeriod
-              }
+              value={(props.value ?? 0) + groupSpentForPeriod}
               style={{ fontWeight: 600, ...styles.tnum }}
             />
           )}
@@ -345,16 +326,8 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
   const format = useFormat();
   const { spentByCategory } = useAllocationPeriodSpending();
 
-  const budgetBindingFactory = useCallback(
-    (categoryId: string) => envelopeBudget.catBudgeted(categoryId),
-    [],
-  );
-  const categoryBudgetedForPeriod = useConvertedCategoryTotal({
-    categories: [category],
-    allocationPeriod,
-    bindingFactory: budgetBindingFactory,
-    sheetBinding: envelopeBudget.catBudgeted(category.id),
-  });
+  const rawCatBudgeted =
+    useEnvelopeSheetValue(envelopeBudget.catBudgeted(category.id)) ?? 0;
   const categorySpentForPeriod = spentByCategory.get(category.id) ?? 0;
 
   const budgetMenuTriggerRef = useRef(null);
@@ -613,24 +586,17 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
             binding={envelopeBudget.catSumAmount(category.id)}
             type="financial"
           >
-            {props => {
-              const adjustedValue =
-                allocationPeriod === 'monthly'
-                  ? props.value
-                  : categorySpentForPeriod;
-
-              return (
-                <CellValueText
-                  {...props}
-                  value={adjustedValue}
-                  className={css({
-                    cursor: 'pointer',
-                    ':hover': { textDecoration: 'underline' },
-                    ...makeAmountGrey(adjustedValue),
-                  })}
-                />
-              );
-            }}
+            {props => (
+              <CellValueText
+                {...props}
+                value={categorySpentForPeriod}
+                className={css({
+                  cursor: 'pointer',
+                  ':hover': { textDecoration: 'underline' },
+                  ...makeAmountGrey(categorySpentForPeriod),
+                })}
+              />
+            )}
           </EnvelopeCellValue>
         </View>
       </Field>
@@ -673,11 +639,7 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
             {props => (
               <CellValueText
                 {...props}
-                value={
-                  allocationPeriod === 'monthly'
-                    ? props.value
-                    : categoryBudgetedForPeriod + categorySpentForPeriod
-                }
+                value={rawCatBudgeted + categorySpentForPeriod}
                 className={props.className}
               />
             )}
@@ -709,40 +671,25 @@ type IncomeGroupMonthProps = {
   month: string;
 };
 export function IncomeGroupMonth({ month }: IncomeGroupMonthProps) {
-  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
-  const allocationPeriod =
-    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
-  const { periodIncome } = useAllocationPeriodSpending();
-
   return (
     <View style={{ flex: 1 }}>
-      <Field
+      <EnvelopeSheetCell
         name="received"
         width="flex"
-        style={{ textAlign: 'right' }}
-      >
-        <EnvelopeCellValue
-          binding={envelopeBudget.groupIncomeReceived}
-          type="financial"
-        >
-          {props => (
-            <CellValueText
-              {...props}
-              value={
-                allocationPeriod === 'monthly' ? props.value : periodIncome
-              }
-              style={{
-                fontWeight: 600,
-                paddingRight: styles.monthRightPadding,
-                ...styles.tnum,
-                backgroundColor: monthUtils.isCurrentMonth(month)
-                  ? theme.budgetHeaderCurrentMonth
-                  : theme.budgetHeaderOtherMonth,
-              }}
-            />
-          )}
-        </EnvelopeCellValue>
-      </Field>
+        textAlign="right"
+        style={{
+          fontWeight: 600,
+          paddingRight: styles.monthRightPadding,
+          ...styles.tnum,
+          backgroundColor: monthUtils.isCurrentMonth(month)
+            ? theme.budgetHeaderCurrentMonth
+            : theme.budgetHeaderOtherMonth,
+        }}
+        valueProps={{
+          binding: envelopeBudget.groupIncomeReceived,
+          type: 'financial',
+        }}
+      />
     </View>
   );
 }
@@ -754,12 +701,6 @@ export function IncomeCategoryMonth({
   onShowActivity,
   onBudgetAction,
 }: CategoryMonthProps) {
-  const [budgetAllocationPeriod] = useGlobalPref('budgetAllocationPeriod');
-  const allocationPeriod =
-    (budgetAllocationPeriod as BudgetAllocationPeriod | undefined) ?? 'weekly';
-  const { spentByCategory } = useAllocationPeriodSpending();
-  const categoryIncomeForPeriod = spentByCategory.get(category.id) ?? 0;
-
   const incomeMenuTriggerRef = useRef(null);
   const {
     setMenuOpen: setIncomeMenuOpen,
@@ -821,19 +762,7 @@ export function IncomeCategoryMonth({
               goal={envelopeBudget.catGoal(category.id)}
               budgeted={envelopeBudget.catBudgeted(category.id)}
               longGoal={envelopeBudget.catLongGoal(category.id)}
-            >
-              {props => (
-                <CellValueText
-                  {...props}
-                  value={
-                    allocationPeriod === 'monthly'
-                      ? props.value
-                      : categoryIncomeForPeriod
-                  }
-                  className={props.className}
-                />
-              )}
-            </BalanceWithCarryover>
+            />
           </Button>
           <Popover
             triggerRef={incomeMenuTriggerRef}
